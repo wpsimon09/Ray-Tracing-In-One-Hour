@@ -1,5 +1,0 @@
-/home/wpsimon09/Software/Ray-Tracing-In-One-Hour/build/CMakeFiles/LearnVulkan.dir
-/home/wpsimon09/Software/Ray-Tracing-In-One-Hour/build/CMakeFiles/run.dir
-/home/wpsimon09/Software/Ray-Tracing-In-One-Hour/build/CMakeFiles/reset.dir
-/home/wpsimon09/Software/Ray-Tracing-In-One-Hour/build/CMakeFiles/edit_cache.dir
-/home/wpsimon09/Software/Ray-Tracing-In-One-Hour/build/CMakeFiles/rebuild_cache.dir
