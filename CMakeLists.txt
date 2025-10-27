@@ -43,7 +43,7 @@ endif()
 
 
 # Link libraries
-target_link_libraries(${TARGET} PRIVATE glfw Vulkan::Vulkan assimp)
+target_link_libraries(${TARGET} PRIVATE glfw Vulkan::Vulkan)
 
 # Custom target for running the executable
 add_custom_target(run
