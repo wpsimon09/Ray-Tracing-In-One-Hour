@@ -19,6 +19,7 @@ VertexOutput vertexMain(uint VertexIndex: SV_VertexID)
     VertexOutput out;
     out.uv = float2((VertexIndex << 1) & 2, VertexIndex & 2);
     out.sv_position = float4(out.uv * 2.0f - 1.0f, 0.0f, 1.0f);
+    return out;
 }
 
 [shader("fragment")]

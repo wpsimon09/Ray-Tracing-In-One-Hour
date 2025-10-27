@@ -4,10 +4,10 @@ import sys
 
 
 # Path to the Slang compiler (edit this if slangc isn't in your PATH)
-SLANGC_PATH = r"/home/wpsimon09/SDKs/slang/bin/slangc" if os.name == "nt" else "/usr/local/bin/slangc"
+SLANGC_PATH = r"/home/wpsimon09/SDKs/slang/bin/slangc" 
 
 # Shader source file
-INPUT_FILE = "shader.slang"
+INPUT_FILE = "main.slang"
 
 # Output directory for SPIR-V files
 OUT_DIR = "spirv"

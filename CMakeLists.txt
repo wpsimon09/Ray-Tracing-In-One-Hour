@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
-project(LearnVulkan)
+project(RaytracingInOneHour)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
-set(TARGET LearnVulkan)
+set(TARGET RaytracingInOneHour)
 set(SOURCES src/main.cpp
         Includes/HelloTriangle.cpp
         Includes/HelloTriangle.hpp
@@ -40,7 +40,7 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_options(${TARGET} PRIVATE ${CFLAGS_DEBUG})
 endif()
 
-
+file(COPY ${CMAKE_SOURCE_DIR}/Shaders DESTINATION ${CMAKE_BINARY_DIR})
 
 # Link libraries
 target_link_libraries(${TARGET} PRIVATE glfw Vulkan::Vulkan)
