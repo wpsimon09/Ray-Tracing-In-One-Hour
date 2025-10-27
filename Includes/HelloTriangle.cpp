@@ -3,7 +3,12 @@
 //
 
 #include "HelloTriangle.hpp"
+#include "Utils.hpp"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
 
+#include <stdexcept>
 #include <unistd.h>
 #include <vulkan/vulkan_core.h>
 
@@ -24,6 +29,7 @@ VkBool32 HelloTriangle::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT    
 {
     if(messageSeverity > VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
     {
+
         GetSeverity(messageSeverity);
         GetMessageType(messageType);
         std::cerr << "\n File:\t" << __FILE__ << "\n Message:\t" << pCallbackData->pMessage << "\n Message ID:\t"
@@ -67,6 +73,7 @@ void HelloTriangle::InitVulkan()
     CreateIndexBuffers();
     CreateCommandBuffers();
     CreateSyncObjects();
+    InitImGui();
 }
 
 void HelloTriangle::CreateCamera()
@@ -134,6 +141,55 @@ void HelloTriangle::CreateInstance()
     else
     {
         std::cout << "Vulkan instance created successfuly \n";
+    }
+}
+
+void HelloTriangle::InitImGui()
+{
+    VkDescriptorPoolSize imGuiPoolSizes[] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 20}};
+
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo{
+        VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,       nullptr,
+        VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,   20,
+        static_cast<uint32_t>(IM_ARRAYSIZE(imGuiPoolSizes)), imGuiPoolSizes};
+    auto result = vkCreateDescriptorPool(m_device, &descriptorPoolCreateInfo, nullptr, &m_imGuiDescriptorPool);
+
+    if(result != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to crate IM_GUI descriptor pool !");
+    }
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    m_imGuiIo = &ImGui::GetIO();
+
+    m_imGuiIo->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    m_imGuiIo->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
+    ImGui_ImplGlfw_InitForVulkan(m_window, true);
+
+    ImGui_ImplVulkan_InitInfo vulkanInitInfo    = {};
+    vulkanInitInfo.ApiVersion                   = VK_API_VERSION_1_3;
+    vulkanInitInfo.Instance                     = m_instance;
+    vulkanInitInfo.PhysicalDevice               = m_physicalDevice;
+    vulkanInitInfo.Device                       = m_device;
+    vulkanInitInfo.QueueFamily                  = FindQueueFamilies(m_physicalDevice, m_sruface).graphicsFamily.value();
+    vulkanInitInfo.Queue                        = m_graphicsQueue;
+    vulkanInitInfo.DescriptorPool               = m_imGuiDescriptorPool;
+    vulkanInitInfo.MinImageCount                = MAX_FRAMES_IN_FLIGHT;
+    vulkanInitInfo.ImageCount                   = MAX_FRAMES_IN_FLIGHT;
+    vulkanInitInfo.PipelineInfoMain.RenderPass  = m_renderPass;
+    vulkanInitInfo.PipelineInfoMain.Subpass     = 0;
+    vulkanInitInfo.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    vulkanInitInfo.UseDynamicRendering          = false;
+
+    if(ImGui_ImplVulkan_Init(&vulkanInitInfo))
+    {
+        std::cout << "ImGui successfully initialised ! \n";
+    }
+    else
+    {
+        throw std::runtime_error("Failed to init ImGui !");
     }
 }
 
@@ -911,6 +967,19 @@ void HelloTriangle::CreateCommandBuffers()
     }
 }
 
+void HelloTriangle::DrawImGui()
+{
+    ImGui_ImplVulkan_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    ImGui::ShowDemoWindow();
+
+    ImGui::Render();
+
+    m_imGuiDrawData = ImGui::GetDrawData();
+}
+
 void HelloTriangle::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 {
     VkCommandBufferBeginInfo beginInfo{};
@@ -962,6 +1031,8 @@ void HelloTriangle::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
 
     vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 
+    ImGui_ImplVulkan_RenderDrawData(m_imGuiDrawData, commandBuffer);
+
     vkCmdEndRenderPass(commandBuffer);
 
     if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
@@ -996,6 +1067,8 @@ void HelloTriangle::CreateSyncObjects()
 
 void HelloTriangle::UpdateUniformBuffer(uint32_t currentImage)
 {
+    DrawImGui();
+
     UniformBufferObject ubo{};
     ubo.model      = glm::mat4(1.0f);
     ubo.model      = glm::scale(ubo.model, glm::vec3(2.7f));
@@ -1148,7 +1221,12 @@ void HelloTriangle::CleanUp()
         vkFreeMemory(m_device, m_uniformBuffersMemory[i], nullptr);
     }
 
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
     vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr);
+    vkDestroyDescriptorPool(m_device, m_imGuiDescriptorPool, nullptr);
     vkDestroyDescriptorSetLayout(m_device, m_descriptorSetLayout, nullptr);
 
     vkDestroyBuffer(m_device, m_vertexBuffer, nullptr);

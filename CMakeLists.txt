@@ -18,6 +18,17 @@ set(SOURCES src/main.cpp
 set(CFLAGS_RELEASE "-O2")
 set(CFLAGS_DEBUG "-g")
 
+set(IMGUI_PATH "${CMAKE_SOURCE_DIR}/Includes/imgui")
+file(GLOB IMGUI_SOURCES
+        ${IMGUI_PATH}/*.cpp
+        ${IMGUI_PATH}/backends/imgui_impl_glfw.h
+        ${IMGUI_PATH}/backends/imgui_impl_glfw.cpp
+        ${IMGUI_PATH}/backends/imgui_impl_vulkan.cpp
+        ${IMGUI_PATH}/backends/imgui_impl_vulkan.h
+)
+
+
+
 # Find Vulkan, GLFW, and GLM
 find_package(Vulkan REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
@@ -41,9 +52,15 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 file(COPY ${CMAKE_SOURCE_DIR}/Shaders DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY ${CMAKE_SOURCE_DIR}/Fonts DESTINATION ${CMAKE_BINARY_DIR})
 
 # Link libraries
 target_link_libraries(${TARGET} PRIVATE glfw Vulkan::Vulkan)
+add_library("ImGui" STATIC ${IMGUI_SOURCES})
+target_include_directories("ImGui" PUBLIC ${IMGUI_PATH})
+target_include_directories("ImGui" PUBLIC ${IMGUI_PATH}/backends)
+
+target_link_libraries(${TARGET} PUBLIC ImGui)
 
 # Custom target for running the executable
 add_custom_target(run

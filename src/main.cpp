@@ -2,14 +2,18 @@
 
 #include "HelloTriangle.hpp"
 
-int main() {
+int main()
+{
 
     HelloTriangle app;
 
-    try {
+    try
+    {
         app.run();
-    }catch(const std::exception &e) {
-        std::cerr<<e.what();
+    }
+    catch(const std::exception& e)
+    {
+        std::cout << e.what();
         return EXIT_FAILURE;
     }
 
