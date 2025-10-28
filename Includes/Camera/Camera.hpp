@@ -9,66 +9,70 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include <GLFW/glfw3.h>
 
-class Camera {
-public:
-  explicit Camera(GLFWwindow *window,
-                  glm::vec3 center = glm::vec3(0.0f, 0.0f, 0.0f),
-                  glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),
-                  float radius = 40.0f, float minRadius = 1.0f,
-                  float azimuthAngle = -10.0f, float polarAngle = 10.0f);
+class Camera
+{
+  public:
+    explicit Camera(GLFWwindow* window,
+                    glm::vec3   center       = glm::vec3(0.0f, 0.0f, 0.0f),
+                    glm::vec3   up           = glm::vec3(0.0f, 1.0f, 0.0f),
+                    float       radius       = 40.0f,
+                    float       minRadius    = 1.0f,
+                    float       azimuthAngle = -10.0f,
+                    float       polarAngle   = 10.0f);
 
-  void rotateAzimutn(float radians);
+    void rotateAzimutn(float radians);
 
-  void rotatePolar(float radains);
+    void rotatePolar(float radains);
 
-  void zoom(float by);
+    void zoom(float by);
 
-  void moveHorizontal(float distance);
+    void moveHorizontal(float distance);
 
-  void moveVertical(float distance);
+    void moveVertical(float distance);
 
-  void processResize(int newWidht, int newHeight);
+    void processResize(int newWidht, int newHeight);
 
-  glm::mat4 getPojectionMatix() const { return this->projection; }
+    glm::mat4 getPojectionMatix() const { return this->projection; }
 
-  glm::mat4 getViewMatrix() const {
-    return glm::lookAt(this->position, center, this->worldUp);
-  };
+    glm::mat4 getViewMatrix() const { return glm::lookAt(this->position, center, this->worldUp); };
 
-  glm::vec3 getPosition() const { return this->position; };
+    glm::vec3& getPosition() { return this->position; };
 
-  float getFarPlane() { return this->farPlane; }
+    glm::vec3& getOrbitPoint() { return this->center; }
 
-  float getNearPlane() { return this->nearPlane; }
+    float getFarPlane() { return this->farPlane; }
 
-  bool getIsFirstMouse() const { return m_isFirstMouse; }
+    float getNearPlane() { return this->nearPlane; }
 
-  bool setIsFirstMouse(bool val = false) {
-    this->m_isFirstMouse = val;
-    return false;
-  }
+    bool getIsFirstMouse() const { return m_isFirstMouse; }
 
-  void update();
+    bool setIsFirstMouse(bool val = false)
+    {
+        this->m_isFirstMouse = val;
+        return false;
+    }
 
-  ~Camera() = default;
+    void update();
 
-private:
-  glm::vec3 getEye();
+    ~Camera() = default;
 
-  float radius;
-  float minRadius;
-  float azimuthAngle;
-  float polarAngle;
+  private:
+    glm::vec3 getEye();
 
-  glm::vec3 position;
-  glm::vec3 center;
-  glm::vec3 worldUp;
+    float radius;
+    float minRadius;
+    float azimuthAngle;
+    float polarAngle;
 
-  glm::mat4 projection = glm::mat4(1.0f);
+    glm::vec3 position;
+    glm::vec3 center;
+    glm::vec3 worldUp;
 
-  float farPlane;
-  float nearPlane;
-  bool m_isFirstMouse = true;
+    glm::mat4 projection = glm::mat4(1.0f);
+
+    float farPlane;
+    float nearPlane;
+    bool  m_isFirstMouse = true;
 };
 
-#endif // CAMERA_HPP
+#endif  // CAMERA_HPP

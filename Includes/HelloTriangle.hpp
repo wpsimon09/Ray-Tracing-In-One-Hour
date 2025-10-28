@@ -182,8 +182,8 @@ class HelloTriangle
     //-----------------
     // IMGUI
     //-----------------
-    ImGuiIO* m_imGuiIo;
-    //ImFont*          m_font;
+    ImGuiIO*         m_imGuiIo;
+    ImFont*          m_font;
     VkDescriptorPool m_imGuiDescriptorPool;
     VkPipelineCache  m_imGuiPipelineCache;
 

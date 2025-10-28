@@ -168,6 +168,8 @@ void HelloTriangle::InitImGui()
     m_imGuiIo->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     m_imGuiIo->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
+    m_font = m_imGuiIo->Fonts->AddFontFromFileTTF("Fonts/Roboto-Medium.ttf", 16.0f);
+
     ImGui_ImplGlfw_InitForVulkan(m_window, true);
 
     ImGui_ImplVulkan_InitInfo vulkanInitInfo    = {};
@@ -193,6 +195,8 @@ void HelloTriangle::InitImGui()
     {
         throw std::runtime_error("Failed to init ImGui !");
     }
+
+    SetImguiTheme();
 }
 
 bool HelloTriangle::CheckValidationLayerSupport()
@@ -1002,9 +1006,61 @@ void HelloTriangle::DrawImGui()
 {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
+
     ImGui::NewFrame();
 
-    ImGui::ShowDemoWindow();
+
+    ImGui::PushFont(m_font);
+    ImGui::PopFont();
+
+
+    ImGui::Begin("Scene data");
+    ImGui::Text("Fps: %f", m_imGuiIo->Framerate);
+    if(ImGui::TreeNode("Camera info"))
+    {
+        if(ImGui::Button("Reset camera"))
+        {
+            m_camera->getOrbitPoint() = glm::vec3(0.0f);
+        }
+
+        ImGui::DragFloat3("Camera orbit point position", &m_camera->getOrbitPoint()[0]);
+
+        ImGui::TreePop();
+    }
+    ImGui::SeparatorText("Spheres in the scene");
+
+    for(size_t i = 0; i < m_scene.size(); ++i)
+    {
+        Sphere& s = m_scene[i];
+        ImGui::PushID(static_cast<int>(i));
+        ImGui::Separator();
+        ImGui::Text("Sphere %zu", i);
+
+        ImGui::DragFloat3("Position", &s.position[0], 0.05f);
+        ImGui::DragFloat("Radius", &s.position[3], 0.01f, 0.001f, 100.0f);
+
+        float color[3] = {s.colour.x, s.colour.y, s.colour.z};
+        if(ImGui::ColorEdit3("Color", color))
+        {
+            s.colour.x = color[0];
+            s.colour.y = color[1];
+            s.colour.z = color[2];
+        }
+
+        float emission = s.colour.w;
+        if(ImGui::DragFloat("Emission", &emission, 0.0f))
+        {
+            s.colour.w             = emission;
+            s.materialProperties.z = emission;  // keep material emission in sync
+        }
+
+        ImGui::SliderFloat("Roughness", &s.materialProperties.x, 0.0f, 1.0f);
+        ImGui::SliderFloat("Metalness", &s.materialProperties.y, 0.0f, 1.0f);
+
+        ImGui::Separator();
+        ImGui::PopID();
+    }
+    ImGui::End();
 
     ImGui::Render();
 
