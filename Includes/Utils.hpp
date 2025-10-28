@@ -376,4 +376,30 @@ static inline void CopyBuffer(VkDevice      logicalDevice,
     vkFreeCommandBuffers(logicalDevice, transferCommandPool, 1, &commandBuffer);
 }
 
+static inline std::vector<Sphere> GenerateScene()
+{
+    std::vector<Sphere> spheres;
+
+    spheres.push_back({glm::vec4(0.0f, -1.0f, 0.0f, 1.0f), glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), glm::vec4(0.9f, 0.0f, 0.0f, 0.0f)});
+
+    float radius             = 0.2f;
+    float angleStep          = glm::radians(72.0f);
+    float distanceFromCenter = 1.0f;
+
+    for(int i = 0; i < 5; i++)
+    {
+        float angle = i * angleStep;
+        float x     = distanceFromCenter * sin(angle);
+        float z     = distanceFromCenter * cos(angle);
+        float y     = sqrt(distanceFromCenter * distanceFromCenter - x * x - z * z);
+
+        spheres.push_back({glm::vec4(x, y, z, radius), glm::vec4(sin(angle) * 0.5f + 0.5f, cos(angle) * 0.5f + 0.5f, 0.5f, 1.0f),
+                           glm::vec4(0.1f, 0.9f, 0.0f, 0.0f)});
+    }
+
+    spheres.push_back({glm::vec4(0.0f, 2.0f, 0.0f, 0.3f), glm::vec4(1.0f, 0.2f, 0.2f, 1.0f), glm::vec4(0.5f, 0.5f, 2.0f, 0.0f)});
+
+    return spheres;
+}
+
 #endif  //UTILS_HPP

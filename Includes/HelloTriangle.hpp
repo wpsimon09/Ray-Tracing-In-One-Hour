@@ -43,6 +43,8 @@ const bool enableValidationLayers = true;
 class HelloTriangle
 {
   public:
+    HelloTriangle() { m_scene = GenerateScene(); };
+
     void                                  run();
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
                                                         VkDebugUtilsMessageTypeFlagsEXT             messageType,
@@ -89,6 +91,7 @@ class HelloTriangle
     void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void CreateDescriptorPool();
     void CreateDescriptorSet();
+    void CreateShaderStorageBuffer();
     //-----------------------------------
 
     //---------------------
@@ -173,6 +176,9 @@ class HelloTriangle
     std::vector<VkDeviceMemory> m_uniformBuffersMemory;
     std::vector<void*>          m_uniformBuffersMapped;
 
+    std::vector<VkBuffer>       m_ssbo;
+    std::vector<VkDeviceMemory> m_ssboMemory;
+    std::vector<void*>          m_ssboMappedPointer;
     //-----------------
     // IMGUI
     //-----------------
@@ -194,6 +200,7 @@ class HelloTriangle
     double                    m_lastY;
     bool                      m_isMousePressed = false;
     bool                      m_isFirstMouse   = true;
+    std::vector<Sphere>       m_scene;
 };
 
 #endif  //HELLOTRIANGLE_HPP

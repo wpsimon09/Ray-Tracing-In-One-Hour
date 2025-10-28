@@ -8,6 +8,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
 
+#include <cstring>
 #include <stdexcept>
 #include <unistd.h>
 #include <vulkan/vulkan_core.h>
@@ -73,6 +74,7 @@ void HelloTriangle::InitVulkan()
     CreateIndexBuffers();
     CreateCommandBuffers();
     CreateSyncObjects();
+    CreateShaderStorageBuffer();
     InitImGui();
 }
 
@@ -597,6 +599,35 @@ void HelloTriangle::CreateDescriptorSet()
     }
 }
 
+void HelloTriangle::CreateShaderStorageBuffer()
+{
+    m_ssbo.resize(MAX_FRAMES_IN_FLIGHT);
+    m_ssboMemory.resize(MAX_FRAMES_IN_FLIGHT);
+    m_ssboMappedPointer.resize(MAX_FRAMES_IN_FLIGHT);
+
+    //-------------
+    // BUFFER INFO
+    //-------------
+    BufferCreateInfo bufferInfo{};
+    bufferInfo.size           = sizeof(Sphere) * m_scene.size();
+    bufferInfo.properties     = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    bufferInfo.surface        = m_sruface;
+    bufferInfo.logicalDevice  = m_device;
+    bufferInfo.physicalDevice = m_physicalDevice;
+
+    //----------------
+    // CREA
+    //---------------
+    for(int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        bufferInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+        CreateBuffer(bufferInfo, m_ssbo[i], m_ssboMemory[i]);
+
+        vkMapMemory(m_device, m_ssboMemory[i], 0, VK_WHOLE_SIZE, 0, &m_ssboMappedPointer[i]);
+        memcpy(m_ssboMappedPointer[i], m_scene.data(), (size_t)bufferInfo.size);
+    }
+}
+
 void HelloTriangle::CreateGraphicsPipeline()
 {
 
@@ -1069,6 +1100,9 @@ void HelloTriangle::UpdateUniformBuffer(uint32_t currentImage)
 {
     DrawImGui();
 
+    // copy the ssbo
+    memcpy(m_ssboMappedPointer[currentFrame], m_scene.data(), m_ssbo.size() * sizeof(Sphere));
+
     UniformBufferObject ubo{};
     ubo.model      = glm::mat4(1.0f);
     ubo.model      = glm::scale(ubo.model, glm::vec3(2.7f));
@@ -1219,6 +1253,10 @@ void HelloTriangle::CleanUp()
     {
         vkDestroyBuffer(m_device, m_uniformBuffers[i], nullptr);
         vkFreeMemory(m_device, m_uniformBuffersMemory[i], nullptr);
+
+        vkUnmapMemory(m_device, m_ssboMemory[i]);
+        vkFreeMemory(m_device, m_ssboMemory[i], nullptr);
+        vkDestroyBuffer(m_device, m_ssbo[i], nullptr);
     }
 
     ImGui_ImplVulkan_Shutdown();
