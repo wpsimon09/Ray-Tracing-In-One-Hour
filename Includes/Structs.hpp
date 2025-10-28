@@ -1,5 +1,7 @@
+#include <glm/fwd.hpp>
 #include <glm/glm.hpp>
 #include <iostream>
+#include <optional>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
@@ -52,50 +54,6 @@ struct ApplicationStatusNotifier
     }
 };
 
-struct Vertex
-{
-    glm::vec3 pos;
-    glm::vec3 color;
-
-    static VkVertexInputBindingDescription getBindingDescription()
-    {
-        VkVertexInputBindingDescription bindingDescription{};
-        //we will only use one binding
-        //ths will be its index
-        bindingDescription.binding = 0;
-        //nubmer of bites between each data entry
-        bindingDescription.stride = sizeof(Vertex);
-        //move to the next vertex after each vertex not aftera each instance
-        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        return bindingDescription;
-    }
-
-    static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
-    {
-        std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions;
-        //which vertex array binding to use
-        attributeDescriptions[0].binding = 0;
-        //location in shader
-        attributeDescriptions[0].location = 0;
-        //vec2 has 2 32-bit float components
-        attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        //offset to the position>
-        attributeDescriptions[0].offset = offsetof(Vertex, pos);
-
-        //which vertex array binding to use
-        attributeDescriptions[1].binding = 0;
-        //location in shader
-        attributeDescriptions[1].location = 1;
-        //vec2 has 2 32-bit float components
-        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        //offset to the position
-        attributeDescriptions[1].offset = offsetof(Vertex, color);
-
-        return attributeDescriptions;
-    }
-};
-
 struct QueueFamilyIndices
 {
     std::optional<uint32_t> graphicsFamily;
@@ -119,7 +77,8 @@ struct UniformBufferObject
 {
     glm::mat4 model;
     glm::mat4 view;
-    glm::mat4 projection;
+    glm::mat4 inverseView;
+    glm::vec4 viewData;  // x - aspect, y - fov2tan, z - sphere count
 };
 
 

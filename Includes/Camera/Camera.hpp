@@ -52,8 +52,9 @@ class Camera
         return false;
     }
 
-    float getHalf2Tangetn() { return this->half2tan; }
-    float getAspect() { return this->aspect; }
+    float     getTanHalfFov() { return this->half2tan; }
+    glm::mat4 getInverseView() { return glm::inverse(getViewMatrix()); }
+    float     getAspect() { return this->aspect; }
 
     void update(int widht, int height);
 

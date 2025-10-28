@@ -75,8 +75,6 @@ void HelloTriangle::InitVulkan()
     CreateGraphicsPipeline();
     CreateFrameBuffers();
     CreateCommandPool();
-    CreateVertexBuffers();
-    CreateIndexBuffers();
     CreateCommandBuffers();
     CreateSyncObjects();
     InitImGui();
@@ -660,7 +658,7 @@ void HelloTriangle::CreateShaderStorageBuffer()
         bufferInfo.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
         CreateBuffer(bufferInfo, m_ssbo[i], m_ssboMemory[i]);
 
-        vkMapMemory(m_device, m_ssboMemory[i], 0, VK_WHOLE_SIZE, 0, &m_ssboMappedPointer[i]);
+        vkMapMemory(m_device, m_ssboMemory[i], 0, bufferInfo.size, 0, &m_ssboMappedPointer[i]);
         memcpy(m_ssboMappedPointer[i], m_scene.data(), (size_t)bufferInfo.size);
     }
 }
@@ -711,8 +709,7 @@ void HelloTriangle::CreateGraphicsPipeline()
     //------------------
     // VERTEX ATTRIBUTES
     //------------------
-    auto bindingDescription    = Vertex::getBindingDescription();
-    auto attributeDescriptions = Vertex::getAttributeDescriptions();
+
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -922,81 +919,6 @@ void HelloTriangle::CreateCommandPool()
     }
 }
 
-void HelloTriangle::CreateVertexBuffers()
-{
-    //-------------
-    // BUFFER INFO
-    //-------------
-    BufferCreateInfo bufferInfo{};
-    bufferInfo.size           = sizeof(vertices[0]) * vertices.size();
-    bufferInfo.properties     = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-    bufferInfo.surface        = m_sruface;
-    bufferInfo.logicalDevice  = m_device;
-    bufferInfo.physicalDevice = m_physicalDevice;
-
-    //----------------
-    // STAGING BUFFER
-    //----------------
-    VkBuffer       stagingBuffer;
-    VkDeviceMemory stagingBufferMemory;
-    bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    CreateBuffer(bufferInfo, stagingBuffer, stagingBufferMemory);
-
-    void* data;
-    vkMapMemory(m_device, stagingBufferMemory, 0, bufferInfo.size, 0, &data);
-    memcpy(data, vertices.data(), (size_t)bufferInfo.size);
-    vkUnmapMemory(m_device, stagingBufferMemory);
-
-    //----------------
-    // VERTEX BUFFER
-    //----------------
-    bufferInfo.usage      = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-    bufferInfo.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-    CreateBuffer(bufferInfo, m_vertexBuffer, m_vertexBufferMemory);
-
-    //-----------------------------------
-    // MOVE THE MEMORY FROM STAGING
-    // BUFFER TO ACCTUAL VERTEX BUFFER
-    //----------------------------------
-    CopyBuffer(m_device, m_transferQueue, m_transferCommandPool, stagingBuffer, m_vertexBuffer, bufferInfo.size);
-
-    vkDestroyBuffer(m_device, stagingBuffer, nullptr);
-    vkFreeMemory(m_device, stagingBufferMemory, nullptr);
-}
-
-void HelloTriangle::CreateIndexBuffers()
-{
-    BufferCreateInfo bufferCreateInfo{};
-    bufferCreateInfo.physicalDevice = m_physicalDevice;
-    bufferCreateInfo.logicalDevice  = m_device;
-    bufferCreateInfo.surface        = m_sruface;
-
-    bufferCreateInfo.properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-    bufferCreateInfo.usage      = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-    bufferCreateInfo.size       = sizeof(uint16_t) * indices.size();
-
-    VkBuffer       stagingBuffer;
-    VkDeviceMemory stagingMemory;
-    CreateBuffer(bufferCreateInfo, stagingBuffer, stagingMemory);
-
-    // put data to the staging buffer
-    void* data;
-    vkMapMemory(m_device, stagingMemory, 0, bufferCreateInfo.size, 0, &data);
-    memcpy(data, indices.data(), (size_t)bufferCreateInfo.size);
-    vkUnmapMemory(m_device, stagingMemory);
-
-    // create index buffer
-    bufferCreateInfo.usage      = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    bufferCreateInfo.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-    CreateBuffer(bufferCreateInfo, m_indexBuffer, m_indexBufferMemory);
-
-    // copy staging buffer to the index buffer
-    CopyBuffer(m_device, m_transferQueue, m_transferCommandPool, stagingBuffer, m_indexBuffer, bufferCreateInfo.size);
-
-    // clean up
-    vkDestroyBuffer(m_device, stagingBuffer, nullptr);
-    vkFreeMemory(m_device, stagingMemory, nullptr);
-}
 
 void HelloTriangle::CreateUniformBuffers()
 {
@@ -1131,6 +1053,9 @@ void HelloTriangle::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
 
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1,
+                            &m_descriptorSets[currentFrame], 0, 0);
+
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
@@ -1146,9 +1071,6 @@ void HelloTriangle::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     scissors.offset = {0, 0};
     scissors.extent = m_swapChainExtent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissors);
-
-    VkBuffer     vertexBuffers[] = {m_vertexBuffer};
-    VkDeviceSize offsets[]       = {0};
 
     vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 
@@ -1194,11 +1116,13 @@ void HelloTriangle::UpdateUniformBuffer(uint32_t currentImage)
     memcpy(m_ssboMappedPointer[currentFrame], m_scene.data(), m_ssbo.size() * sizeof(Sphere));
 
     UniformBufferObject ubo{};
-    ubo.model      = glm::mat4(1.0f);
-    ubo.model      = glm::scale(ubo.model, glm::vec3(2.7f));
-    ubo.projection = m_camera->getPojectionMatix();
-    ubo.projection[1][1] *= -1;
-    ubo.view = m_camera->getViewMatrix();
+    ubo.model       = glm::mat4(1.0f);
+    ubo.model       = glm::scale(ubo.model, glm::vec3(2.7f));
+    ubo.view        = m_camera->getViewMatrix();
+    ubo.inverseView = m_camera->getInverseView();
+    ubo.viewData.x  = m_camera->getAspect();
+    ubo.viewData.y  = m_camera->getTanHalfFov();
+    ubo.viewData.z  = static_cast<int>(m_scene.size() / sizeof(Sphere));
 
     memcpy(m_uniformBuffersMapped[currentFrame], &ubo, sizeof(ubo));
 }
@@ -1357,12 +1281,6 @@ void HelloTriangle::CleanUp()
     vkDestroyDescriptorPool(m_device, m_imGuiDescriptorPool, nullptr);
     vkDestroyDescriptorSetLayout(m_device, m_descriptorSetLayout, nullptr);
 
-    vkDestroyBuffer(m_device, m_vertexBuffer, nullptr);
-    vkFreeMemory(m_device, m_vertexBufferMemory, nullptr);
-
-    vkDestroyBuffer(m_device, m_indexBuffer, nullptr);
-    vkFreeMemory(m_device, m_indexBufferMemory, nullptr);
-
     vkDestroyPipeline(m_device, m_graphicsPipeline, nullptr);
     vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
     vkDestroyRenderPass(m_device, m_renderPass, nullptr);
@@ -1382,6 +1300,7 @@ void HelloTriangle::FrameBufferResizeCallback(GLFWwindow* window, int width, int
     std::cout << "Resize x: " << width << "y: " << height << std::endl;
     auto app                  = reinterpret_cast<HelloTriangle*>(glfwGetWindowUserPointer((window)));
     app->m_frameBufferResized = true;
+    app->m_camera->update(width, height);
 }
 
 void HelloTriangle::MousePositionCallback(GLFWwindow* window, double xpos, double ypos)

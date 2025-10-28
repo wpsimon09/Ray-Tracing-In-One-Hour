@@ -6,6 +6,7 @@ struct UnifromBuffer
     float4x4 model;
     float4x4 view;
     float4x4 proj;
+    float4 viewParams;
 }
 
 struct VertexOutput
@@ -32,5 +33,6 @@ VertexOutput vertexMain(uint VertexIndex: SV_VertexID)
 [shader("fragment")]
 float4 fragmentMain(VertexOutput fsIn) : SV_Target
 {
+    var camera = PinholeCamera()
     return float4(SceneData[0].colour.xyz,  1.0);
 }

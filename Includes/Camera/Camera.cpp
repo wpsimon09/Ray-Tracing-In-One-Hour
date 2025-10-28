@@ -3,6 +3,7 @@
 //
 
 #include "Camera.hpp"
+#include <glm/trigonometric.hpp>
 #include <stdexcept>
 
 Camera::Camera(GLFWwindow* window, glm::vec3 center, glm::vec3 up, float radius, float minRadius, float azimuthAngle, float polarAngle)
@@ -14,13 +15,14 @@ Camera::Camera(GLFWwindow* window, glm::vec3 center, glm::vec3 up, float radius,
     this->projection = glm::perspective(glm::radians(65.0f), (float)width / (float)height, 0.1f, 700.0f);
     this->farPlane   = 700.0f;
     ;
-    this->nearPlane = 0.1f;
-
+    this->nearPlane    = 0.1f;
+    this->aspect       = (float)width / (float)height;
     this->radius       = radius;
     this->minRadius    = minRadius;
     this->azimuthAngle = azimuthAngle;
     this->polarAngle   = polarAngle;
     this->position     = getEye();
+    this->half2tan     = glm::tan(glm::radians(65.0f) / 2);
 }
 
 void Camera::rotateAzimutn(float radians)
@@ -86,8 +88,10 @@ void Camera::processResize(int newWidht, int newHeight)
 
 void Camera::update(int widht, int height)
 {
-    this->width  = widht;
-    this->height = height;
+    this->width      = widht;
+    this->height     = height;
+    aspect           = float(widht) / float(height);
+    this->projection = glm::perspective(glm::radians(65.0f), aspect, this->nearPlane, farPlane);
 }
 
 glm::vec3 Camera::getEye()
