@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
 set(TARGET RaytracingInOneHour)
 set(SOURCES src/main.cpp
-        Includes/HelloTriangle.cpp
-        Includes/HelloTriangle.hpp
+        Includes/RenderingEngine.cpp
+        Includes/RenderingEngine.hpp
         Includes/DebugInfoLog.hpp
         Includes/Utils.hpp
         Includes/Structs.hpp

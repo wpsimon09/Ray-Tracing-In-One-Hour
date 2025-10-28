@@ -36,10 +36,10 @@ const bool enableValidationLayers = true;
 #endif
 
 
-class HelloTriangle
+class RenderingEngine
 {
   public:
-    HelloTriangle() { m_scene = GenerateScene(); };
+    RenderingEngine() { m_scene = GenerateScene(); };
 
     void                                  run();
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,

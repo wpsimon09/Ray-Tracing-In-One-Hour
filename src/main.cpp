@@ -1,11 +1,11 @@
 #include <iostream>
 
-#include "HelloTriangle.hpp"
+#include "RenderingEngine.hpp"
 
 int main()
 {
 
-    HelloTriangle app;
+    RenderingEngine app;
 
     try
     {

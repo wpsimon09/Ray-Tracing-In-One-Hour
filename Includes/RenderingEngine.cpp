@@ -2,7 +2,7 @@
 // Created by wpsimon09 on 25/07/24.
 //
 
-#include "HelloTriangle.hpp"
+#include "RenderingEngine.hpp"
 #include "Utils.hpp"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -17,7 +17,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
-void HelloTriangle::run()
+void RenderingEngine::run()
 {
     InitWindow();
 
@@ -27,7 +27,7 @@ void HelloTriangle::run()
     CleanUp();
 }
 
-VkBool32 HelloTriangle::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+VkBool32 RenderingEngine::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
                                       VkDebugUtilsMessageTypeFlagsEXT             messageType,
                                       const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
                                       void*                                       pUserData)
@@ -43,7 +43,7 @@ VkBool32 HelloTriangle::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT    
     return VK_FALSE;
 }
 
-void HelloTriangle::InitWindow()
+void RenderingEngine::InitWindow()
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -57,7 +57,7 @@ void HelloTriangle::InitWindow()
     glfwSetScrollCallback(m_window, MouseScrollCallback);
 }
 
-void HelloTriangle::InitVulkan()
+void RenderingEngine::InitVulkan()
 {
     CreateInstance();
     SetUpDebugMessenger();
@@ -80,12 +80,12 @@ void HelloTriangle::InitVulkan()
     InitImGui();
 }
 
-void HelloTriangle::CreateCamera()
+void RenderingEngine::CreateCamera()
 {
     this->m_camera = std::make_unique<Camera>(m_window);
 }
 
-void HelloTriangle::CreateInstance()
+void RenderingEngine::CreateInstance()
 {
     if(enableValidationLayers && !this->CheckValidationLayerSupport())
     {
@@ -148,7 +148,7 @@ void HelloTriangle::CreateInstance()
     }
 }
 
-void HelloTriangle::InitImGui()
+void RenderingEngine::InitImGui()
 {
     VkDescriptorPoolSize imGuiPoolSizes[] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 20}};
 
@@ -201,7 +201,7 @@ void HelloTriangle::InitImGui()
     SetImguiTheme();
 }
 
-bool HelloTriangle::CheckValidationLayerSupport()
+bool RenderingEngine::CheckValidationLayerSupport()
 {
     uint32_t layerCount;
     vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
@@ -226,7 +226,7 @@ bool HelloTriangle::CheckValidationLayerSupport()
     return true;
 }
 
-void HelloTriangle::MainLoop()
+void RenderingEngine::MainLoop()
 {
     while(!glfwWindowShouldClose(m_window))
     {
@@ -238,7 +238,7 @@ void HelloTriangle::MainLoop()
     vkDeviceWaitIdle(m_device);
 }
 
-void HelloTriangle::DrawFrame()
+void RenderingEngine::DrawFrame()
 {
     // wait for previous frame to finish drawind
     vkWaitForFences(m_device, 1, &m_inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
@@ -316,7 +316,7 @@ void HelloTriangle::DrawFrame()
     currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void HelloTriangle::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
+void RenderingEngine::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
 {
     createInfo       = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -328,7 +328,7 @@ void HelloTriangle::PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreate
     createInfo.pUserData       = nullptr;
 }
 
-void HelloTriangle::PickPhysicalDevice()
+void RenderingEngine::PickPhysicalDevice()
 {
     //-----------------------------------
     // GET ALL AVAILABLE PHYSICAL DEVICES
@@ -364,7 +364,7 @@ void HelloTriangle::PickPhysicalDevice()
     }
 }
 
-void HelloTriangle::CreateSwapChain()
+void RenderingEngine::CreateSwapChain()
 {
     SwapChainSupportDetails swapChainSupport = querySwapChainSupport(m_physicalDevice, m_sruface);
     VkSurfaceFormatKHR      surfaceFormat    = chooseSwapSurfaceFormat(swapChainSupport.formats);
@@ -439,7 +439,7 @@ void HelloTriangle::CreateSwapChain()
     std::cout << "Retrieved " << m_swapChainImages.size() << " swap chain images\n";
 }
 
-void HelloTriangle::CreateImageViews()
+void RenderingEngine::CreateImageViews()
 {
     m_swapChainImageViews.resize(m_swapChainImages.size());
     for(size_t i = 0; i < m_swapChainImages.size(); i++)
@@ -468,7 +468,7 @@ void HelloTriangle::CreateImageViews()
     }
 }
 
-void HelloTriangle::CreateRenderPass()
+void RenderingEngine::CreateRenderPass()
 {
     VkAttachmentDescription colorAttachment{};
     colorAttachment.format  = m_swapChainImageFormat;
@@ -533,7 +533,7 @@ void HelloTriangle::CreateRenderPass()
     }
 }
 
-void HelloTriangle::CreateDescriptorSetLayout()
+void RenderingEngine::CreateDescriptorSetLayout()
 {
     std::array<VkDescriptorSetLayoutBinding, 2> descriporSetBindings = {};
 
@@ -561,7 +561,7 @@ void HelloTriangle::CreateDescriptorSetLayout()
     };
 }
 
-void HelloTriangle::CreateDescriptorPool()
+void RenderingEngine::CreateDescriptorPool()
 {
     std::array<VkDescriptorPoolSize, 2> poolSizes{};
     poolSizes[0].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -581,7 +581,7 @@ void HelloTriangle::CreateDescriptorPool()
     }
 }
 
-void HelloTriangle::CreateDescriptorSet()
+void RenderingEngine::CreateDescriptorSet()
 {
     std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, m_descriptorSetLayout);
     VkDescriptorSetAllocateInfo        allocInfo{.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
@@ -634,7 +634,7 @@ void HelloTriangle::CreateDescriptorSet()
     }
 }
 
-void HelloTriangle::CreateShaderStorageBuffer()
+void RenderingEngine::CreateShaderStorageBuffer()
 {
     m_ssbo.resize(MAX_FRAMES_IN_FLIGHT);
     m_ssboMemory.resize(MAX_FRAMES_IN_FLIGHT);
@@ -663,7 +663,7 @@ void HelloTriangle::CreateShaderStorageBuffer()
     }
 }
 
-void HelloTriangle::CreateGraphicsPipeline()
+void RenderingEngine::CreateGraphicsPipeline()
 {
 
     //----------------
@@ -872,7 +872,7 @@ void HelloTriangle::CreateGraphicsPipeline()
     vkDestroyShaderModule(m_device, fragmentShaderModule, nullptr);
 }
 
-void HelloTriangle::CreateFrameBuffers()
+void RenderingEngine::CreateFrameBuffers()
 {
     m_swapChainFrameBuffers.resize(m_swapChainImageViews.size());
 
@@ -895,7 +895,7 @@ void HelloTriangle::CreateFrameBuffers()
     }
 }
 
-void HelloTriangle::CreateCommandPool()
+void RenderingEngine::CreateCommandPool()
 {
     // retrieve all queue families from the GPU
     QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(m_physicalDevice, m_sruface);
@@ -920,7 +920,7 @@ void HelloTriangle::CreateCommandPool()
 }
 
 
-void HelloTriangle::CreateUniformBuffers()
+void RenderingEngine::CreateUniformBuffers()
 {
     BufferCreateInfo bufferInfo{};
     bufferInfo.logicalDevice  = m_device;
@@ -942,7 +942,7 @@ void HelloTriangle::CreateUniformBuffers()
     }
 }
 
-void HelloTriangle::CreateCommandBuffers()
+void RenderingEngine::CreateCommandBuffers()
 {
     m_commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
     VkCommandBufferAllocateInfo allocInfo{};
@@ -957,7 +957,7 @@ void HelloTriangle::CreateCommandBuffers()
     }
 }
 
-void HelloTriangle::DrawImGui()
+void RenderingEngine::DrawImGui()
 {
     ImGui_ImplVulkan_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -1045,7 +1045,7 @@ void HelloTriangle::DrawImGui()
     m_imGuiDrawData = ImGui::GetDrawData();
 }
 
-void HelloTriangle::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+void RenderingEngine::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1106,7 +1106,7 @@ void HelloTriangle::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     }
 }
 
-void HelloTriangle::CreateSyncObjects()
+void RenderingEngine::CreateSyncObjects()
 {
     m_imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
     m_renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -1130,7 +1130,7 @@ void HelloTriangle::CreateSyncObjects()
     }
 }
 
-void HelloTriangle::UpdateUniformBuffer(uint32_t currentImage)
+void RenderingEngine::UpdateUniformBuffer(uint32_t currentImage)
 {
     DrawImGui();
 
@@ -1148,7 +1148,7 @@ void HelloTriangle::UpdateUniformBuffer(uint32_t currentImage)
     memcpy(m_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
 
-void HelloTriangle::CleanupSwapChain()
+void RenderingEngine::CleanupSwapChain()
 {
     for(auto frameBuffer : m_swapChainFrameBuffers)
     {
@@ -1163,7 +1163,7 @@ void HelloTriangle::CleanupSwapChain()
     vkDestroySwapchainKHR(m_device, m_swapChain, nullptr);
 }
 
-void HelloTriangle::RecreateSwapChain()
+void RenderingEngine::RecreateSwapChain()
 {
 
     int width = 0, height = 0;
@@ -1185,7 +1185,7 @@ void HelloTriangle::RecreateSwapChain()
     CreateFrameBuffers();
 }
 
-void HelloTriangle::CreateLogicalDevice()
+void RenderingEngine::CreateLogicalDevice()
 {
     // finds queue family with graphics capabilities VK_QUEUE_GRAPHICS_BIT
     QueueFamilyIndices                   indices = FindQueueFamilies(m_physicalDevice, m_sruface);
@@ -1232,7 +1232,7 @@ void HelloTriangle::CreateLogicalDevice()
     vkGetDeviceQueue(m_device, indices.presentFamily.value(), 0, &m_transferQueue);
 }
 
-void HelloTriangle::CreateSurface()
+void RenderingEngine::CreateSurface()
 {
     if(glfwCreateWindowSurface(m_instance, m_window, nullptr, &m_sruface) != VK_SUCCESS)
     {
@@ -1240,7 +1240,7 @@ void HelloTriangle::CreateSurface()
     }
 }
 
-std::vector<const char*> HelloTriangle::GetRequiredExtentions()
+std::vector<const char*> RenderingEngine::GetRequiredExtentions()
 {
     uint32_t     glfwExtentionsCount = 0;
     const char** glfwExtentions;
@@ -1256,7 +1256,7 @@ std::vector<const char*> HelloTriangle::GetRequiredExtentions()
     return extensions;
 }
 
-void HelloTriangle::SetUpDebugMessenger()
+void RenderingEngine::SetUpDebugMessenger()
 {
     if(!enableValidationLayers)
         return;
@@ -1272,7 +1272,7 @@ void HelloTriangle::SetUpDebugMessenger()
         std::cout << "Debug messenger created" << std::endl;
 }
 
-void HelloTriangle::CleanUp()
+void RenderingEngine::CleanUp()
 {
     for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
@@ -1316,17 +1316,17 @@ void HelloTriangle::CleanUp()
     glfwTerminate();
 }
 
-void HelloTriangle::FrameBufferResizeCallback(GLFWwindow* window, int width, int height)
+void RenderingEngine::FrameBufferResizeCallback(GLFWwindow* window, int width, int height)
 {
     std::cout << "Resize x: " << width << "y: " << height << std::endl;
-    auto app                  = reinterpret_cast<HelloTriangle*>(glfwGetWindowUserPointer((window)));
+    auto app                  = reinterpret_cast<RenderingEngine*>(glfwGetWindowUserPointer((window)));
     app->m_frameBufferResized = true;
     app->m_camera->update(width, height);
 }
 
-void HelloTriangle::MousePositionCallback(GLFWwindow* window, double xpos, double ypos)
+void RenderingEngine::MousePositionCallback(GLFWwindow* window, double xpos, double ypos)
 {
-    auto app      = reinterpret_cast<HelloTriangle*>(glfwGetWindowUserPointer((window)));
+    auto app      = reinterpret_cast<RenderingEngine*>(glfwGetWindowUserPointer((window)));
     auto pointerX = (float)xpos;
     auto pointerY = (float)ypos;
     if(app->m_isFirstMouse)
@@ -1357,9 +1357,9 @@ void HelloTriangle::MousePositionCallback(GLFWwindow* window, double xpos, doubl
     }
 }
 
-void HelloTriangle::MouseClickCallback(GLFWwindow* window, int button, int action, int mods)
+void RenderingEngine::MouseClickCallback(GLFWwindow* window, int button, int action, int mods)
 {
-    auto        app    = reinterpret_cast<HelloTriangle*>(glfwGetWindowUserPointer((window)));
+    auto        app    = reinterpret_cast<RenderingEngine*>(glfwGetWindowUserPointer((window)));
     GLFWcursor* hand   = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
     GLFWcursor* cursor = glfwCreateStandardCursor(GLFW_CURSOR_NORMAL);
     if(button == GLFW_MOUSE_BUTTON_LEFT)
@@ -1377,8 +1377,8 @@ void HelloTriangle::MouseClickCallback(GLFWwindow* window, int button, int actio
     }
 }
 
-void HelloTriangle::MouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+void RenderingEngine::MouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    auto app = reinterpret_cast<HelloTriangle*>(glfwGetWindowUserPointer((window)));
+    auto app = reinterpret_cast<RenderingEngine*>(glfwGetWindowUserPointer((window)));
     app->m_camera->zoom((float)yoffset);
 }
