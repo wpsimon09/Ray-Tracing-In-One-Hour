@@ -8,9 +8,13 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
 
+#include <GLFW/glfw3.h>
+#include <array>
 #include <cstring>
 #include <stdexcept>
+#include <string>
 #include <unistd.h>
+#include <vector>
 #include <vulkan/vulkan_core.h>
 
 void HelloTriangle::run()
@@ -64,6 +68,7 @@ void HelloTriangle::InitVulkan()
     CreateImageViews();
     CreateRenderPass();
     CreateUniformBuffers();
+    CreateShaderStorageBuffer();
     CreateDescriptorSetLayout();
     CreateDescriptorPool();
     CreateDescriptorSet();
@@ -74,7 +79,6 @@ void HelloTriangle::InitVulkan()
     CreateIndexBuffers();
     CreateCommandBuffers();
     CreateSyncObjects();
-    CreateShaderStorageBuffer();
     InitImGui();
 }
 
@@ -230,6 +234,7 @@ void HelloTriangle::MainLoop()
     {
         DrawFrame();
         m_appNotifier.NotifyChange();
+
         glfwPollEvents();
     }
     vkDeviceWaitIdle(m_device);
@@ -350,6 +355,7 @@ void HelloTriangle::PickPhysicalDevice()
             m_physicalDevice = device;
             VkPhysicalDeviceProperties props;
             vkGetPhysicalDeviceProperties(device, &props);
+            m_physicalDeviceName = std::string(props.deviceName);
             std::cout << "Using:" << props.deviceName << std::endl;
             break;
         }
@@ -531,16 +537,24 @@ void HelloTriangle::CreateRenderPass()
 
 void HelloTriangle::CreateDescriptorSetLayout()
 {
-    VkDescriptorSetLayoutBinding uboLayoutBinding{};
-    uboLayoutBinding.binding            = 0;
-    uboLayoutBinding.descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboLayoutBinding.descriptorCount    = 1;
-    uboLayoutBinding.stageFlags         = VK_SHADER_STAGE_VERTEX_BIT;
-    uboLayoutBinding.pImmutableSamplers = nullptr;
+    std::array<VkDescriptorSetLayoutBinding, 2> descriporSetBindings = {};
+
+    descriporSetBindings[0].binding            = 0;
+    descriporSetBindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriporSetBindings[0].descriptorCount    = 1;
+    descriporSetBindings[0].stageFlags         = VK_SHADER_STAGE_ALL;
+    descriporSetBindings[0].pImmutableSamplers = nullptr;
+
+    descriporSetBindings[1].binding            = 1;
+    descriporSetBindings[1].descriptorType     = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    descriporSetBindings[1].descriptorCount    = 1;
+    descriporSetBindings[1].stageFlags         = VK_SHADER_STAGE_ALL;
+    descriporSetBindings[1].pImmutableSamplers = nullptr;
+
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
-    layoutInfo.bindingCount = 1;
-    layoutInfo.pBindings    = &uboLayoutBinding;
+    layoutInfo.bindingCount = static_cast<uint32_t>(descriporSetBindings.size());
+    layoutInfo.pBindings    = descriporSetBindings.data();
     layoutInfo.pNext        = nullptr;
 
     if(vkCreateDescriptorSetLayout(m_device, &layoutInfo, nullptr, &m_descriptorSetLayout) != VK_SUCCESS)
@@ -551,13 +565,16 @@ void HelloTriangle::CreateDescriptorSetLayout()
 
 void HelloTriangle::CreateDescriptorPool()
 {
-    VkDescriptorPoolSize poolSize{};
-    poolSize.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSize.descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+    std::array<VkDescriptorPoolSize, 2> poolSizes{};
+    poolSizes[0].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    poolSizes[0].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+    poolSizes[1].type            = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+    poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
     VkDescriptorPoolCreateInfo poolInfo{.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
-    poolInfo.poolSizeCount = 1;
-    poolInfo.pPoolSizes    = &poolSize;
+    poolInfo.poolSizeCount = static_cast<int>(poolSizes.size());
+    poolInfo.pPoolSizes    = poolSizes.data();
     poolInfo.maxSets       = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
     if(vkCreateDescriptorPool(m_device, &poolInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
@@ -582,24 +599,40 @@ void HelloTriangle::CreateDescriptorSet()
 
     for(size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        VkDescriptorBufferInfo bufferInfo{};
-        bufferInfo.buffer = m_uniformBuffers[i];
-        bufferInfo.offset = 0;
-        bufferInfo.range  = sizeof(UniformBufferObject);
+        VkDescriptorBufferInfo uboBufferInfo{};
+        uboBufferInfo.buffer = m_uniformBuffers[i];
+        uboBufferInfo.offset = 0;
+        uboBufferInfo.range  = sizeof(UniformBufferObject);
 
-        VkWriteDescriptorSet descriptorWrite{.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-        descriptorWrite.dstSet          = m_descriptorSets[i];
-        descriptorWrite.dstBinding      = 0;
-        descriptorWrite.dstArrayElement = 0;
+        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+        descriptorWrites[0].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[0].dstSet           = m_descriptorSets[i];
+        descriptorWrites[0].dstBinding       = 0;
+        descriptorWrites[0].dstArrayElement  = 0;
+        descriptorWrites[0].descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrites[0].descriptorCount  = 1;
+        descriptorWrites[0].pBufferInfo      = &uboBufferInfo;
+        descriptorWrites[0].pImageInfo       = nullptr;
+        descriptorWrites[0].pTexelBufferView = nullptr;
 
-        descriptorWrite.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        descriptorWrite.descriptorCount = 1;
+        VkDescriptorBufferInfo ssboBufferInfo{};
+        ssboBufferInfo.buffer = m_ssbo[i];
+        ssboBufferInfo.offset = 0;
+        ssboBufferInfo.range  = VK_WHOLE_SIZE;
 
-        descriptorWrite.pBufferInfo      = &bufferInfo;
-        descriptorWrite.pImageInfo       = nullptr;
-        descriptorWrite.pTexelBufferView = nullptr;
+        descriptorWrites[1].sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[1].dstSet           = m_descriptorSets[i];
+        descriptorWrites[1].dstBinding       = 1;
+        descriptorWrites[1].dstArrayElement  = 0;
+        descriptorWrites[1].descriptorType   = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        descriptorWrites[1].descriptorCount  = 1;
+        descriptorWrites[1].pBufferInfo      = &ssboBufferInfo;
+        descriptorWrites[1].pImageInfo       = nullptr;
+        descriptorWrites[1].pTexelBufferView = nullptr;
 
-        vkUpdateDescriptorSets(m_device, 1, &descriptorWrite, 0, nullptr);
+        // TODO create descriptor write here
+
+        vkUpdateDescriptorSets(m_device, descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
     }
 }
 
@@ -620,7 +653,7 @@ void HelloTriangle::CreateShaderStorageBuffer()
     bufferInfo.physicalDevice = m_physicalDevice;
 
     //----------------
-    // CREA
+    // CREAT
     //---------------
     for(int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
@@ -1015,6 +1048,7 @@ void HelloTriangle::DrawImGui()
 
 
     ImGui::Begin("Scene data");
+    ImGui::Text("Phyiscal device: %s", m_physicalDeviceName.c_str());
     ImGui::Text("Fps: %f", m_imGuiIo->Framerate);
     if(ImGui::TreeNode("Camera info"))
     {

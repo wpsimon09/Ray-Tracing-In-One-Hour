@@ -201,6 +201,7 @@ class HelloTriangle
     bool                      m_isMousePressed = false;
     bool                      m_isFirstMouse   = true;
     std::vector<Sphere>       m_scene;
+    std::string               m_physicalDeviceName = "";
 };
 
 #endif  //HELLOTRIANGLE_HPP

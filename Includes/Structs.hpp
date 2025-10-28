@@ -80,7 +80,7 @@ struct Vertex
         attributeDescriptions[0].location = 0;
         //vec2 has 2 32-bit float components
         attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        //offset to the position
+        //offset to the position>
         attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
         //which vertex array binding to use

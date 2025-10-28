@@ -52,7 +52,10 @@ class Camera
         return false;
     }
 
-    void update();
+    float getHalf2Tangetn() { return this->half2tan; }
+    float getAspect() { return this->aspect; }
+
+    void update(int widht, int height);
 
     ~Camera() = default;
 
@@ -63,6 +66,8 @@ class Camera
     float minRadius;
     float azimuthAngle;
     float polarAngle;
+    float aspect;
+    float half2tan;
 
     glm::vec3 position;
     glm::vec3 center;
@@ -73,6 +78,7 @@ class Camera
     float farPlane;
     float nearPlane;
     bool  m_isFirstMouse = true;
+    int   width, height;
 };
 
 #endif  // CAMERA_HPP

@@ -1,3 +1,6 @@
+import camera;
+import scene;
+
 struct UnifromBuffer
 {
     float4x4 model;
@@ -11,7 +14,11 @@ struct VertexOutput
     float2 uv;
 }
 
+[[vk::binding(0,0)]]
 ConstantBuffer<UnifromBuffer> GlobalData;
+
+[[vk::binding(1,0)]]
+StructuredBuffer<Sphere> SceneData;
 
 [shader("vertex")]
 VertexOutput vertexMain(uint VertexIndex: SV_VertexID)
@@ -25,5 +32,5 @@ VertexOutput vertexMain(uint VertexIndex: SV_VertexID)
 [shader("fragment")]
 float4 fragmentMain(VertexOutput fsIn) : SV_Target
 {
-    return float4(fsIn.uv, 1.0, 1.0);
+    return float4(SceneData[0].colour.xyz,  1.0);
 }
