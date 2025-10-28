@@ -8,7 +8,7 @@ public struct PinholeCamera{
 
     public float3 film = {0.0f};
 
-    __init(float tan2fov, float aspect, float4x4 view, float4x4 inverseView){
+    public __init(float tan2fov, float aspect, float4x4 view, float4x4 inverseView){
         this.tan2fov = tan2fov;
         this.aspect = aspect;
         this.worldToCamera = view;
@@ -27,8 +27,7 @@ public struct PinholeCamera{
             -1.0f));  
 
 
-        let rayCameraSpaca = RayDesc(float3(0.0f), 0.0f, direction, 10000.0f);        
-   
+        return RayToWorld(RayDesc(float3(0.0f), 0.0f, direction, 10000.0f));        
     }
 
     private RayDesc RayToWorld(RayDesc inRay){
