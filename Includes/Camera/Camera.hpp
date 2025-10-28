@@ -46,6 +46,9 @@ class Camera
 
     bool getIsFirstMouse() const { return m_isFirstMouse; }
 
+    float& getAzimht() { return azimuthAngle; }
+    float& getPolar() { return polarAngle; }
+
     bool setIsFirstMouse(bool val = false)
     {
         this->m_isFirstMouse = val;

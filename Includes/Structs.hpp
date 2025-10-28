@@ -75,7 +75,6 @@ struct SwapChainSupportDetails
 
 struct UniformBufferObject
 {
-    glm::mat4 model;
     glm::mat4 view;
     glm::mat4 inverseView;
     glm::vec4 viewData;  // x - aspect, y - fov2tan, z - sphere count

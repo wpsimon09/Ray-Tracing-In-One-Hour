@@ -970,13 +970,35 @@ void HelloTriangle::DrawImGui()
 
 
     ImGui::Begin("Scene data");
-    ImGui::Text("Phyiscal device: %s", m_physicalDeviceName.c_str());
+    ImGui::Text("Selected GPU: %s", m_physicalDeviceName.c_str());
     ImGui::Text("Fps: %f", m_imGuiIo->Framerate);
     if(ImGui::TreeNode("Camera info"))
     {
+
+        if(ImGui::TreeNode("View matrix debug"))
+        {
+            ImGui::Text("Azimuth: %f \n Polar %f", m_camera->getAzimht(), m_camera->getPolar());
+            glm::mat4 viewMatrix = m_camera->getViewMatrix();
+
+            ImGui::Text("View Matrix:");
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 2));  // tighter rows
+
+            // Display the matrix row by row
+            for(int i = 0; i < 4; ++i)
+            {
+                ImGui::Text("%.3f  %.3f  %.3f  %.3f", viewMatrix[i][0], viewMatrix[i][1], viewMatrix[i][2], viewMatrix[i][3]);
+            }
+
+            ImGui::PopStyleVar();
+            ImGui::TreePop();
+        }
+
+
         if(ImGui::Button("Reset camera"))
         {
             m_camera->getOrbitPoint() = glm::vec3(0.0f);
+            m_camera->getAzimht()     = 0.f;
+            m_camera->getPolar()      = 0.f;
         }
 
         ImGui::DragFloat3("Camera orbit point position", &m_camera->getOrbitPoint()[0]);
@@ -1113,18 +1135,17 @@ void HelloTriangle::UpdateUniformBuffer(uint32_t currentImage)
     DrawImGui();
 
     // copy the ssbo
-    memcpy(m_ssboMappedPointer[currentFrame], m_scene.data(), m_ssbo.size() * sizeof(Sphere));
+    memcpy(m_ssboMappedPointer[currentImage], m_scene.data(), m_ssbo.size() * sizeof(Sphere));
 
     UniformBufferObject ubo{};
-    ubo.model       = glm::mat4(1.0f);
-    ubo.model       = glm::scale(ubo.model, glm::vec3(2.7f));
     ubo.view        = m_camera->getViewMatrix();
     ubo.inverseView = m_camera->getInverseView();
-    ubo.viewData.x  = m_camera->getAspect();
-    ubo.viewData.y  = m_camera->getTanHalfFov();
-    ubo.viewData.z  = static_cast<int>(m_scene.size() / sizeof(Sphere));
 
-    memcpy(m_uniformBuffersMapped[currentFrame], &ubo, sizeof(ubo));
+    ubo.viewData.x = m_camera->getAspect();
+    ubo.viewData.y = m_camera->getTanHalfFov();
+    ubo.viewData.z = static_cast<int>(m_scene.size() / sizeof(Sphere));
+
+    memcpy(m_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
 
 void HelloTriangle::CleanupSwapChain()
