@@ -14,15 +14,17 @@ OUT_DIR = "spirv"
 
 # === MAIN ===
 
-def compile_shader(entry, output_name):
+def compile_shader(entry, output_name, stage):
     """Compile a shader entry point using slangc"""
     output_path = os.path.join(OUT_DIR, output_name)
 
     cmd = [
         SLANGC_PATH,
         INPUT_FILE,
+        "-stage", stage,
         "-target", "spirv",
         "-entry", entry,
+        "-I", "src/modules",
         "-o", output_path
     ]
 
@@ -48,8 +50,8 @@ def main():
 
     os.makedirs(OUT_DIR, exist_ok=True)
 
-    compile_shader("vertexMain", "vertex.spv")
-    compile_shader("fragmentMain", "fragment.spv")
+    compile_shader("vertexMain", "vertex.spv", "vertex")
+    compile_shader("fragmentMain", "fragment.spv", "fragment")
 
     print("\n All shaders compiled successfully!")
 
