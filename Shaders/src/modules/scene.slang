@@ -14,18 +14,14 @@ public struct Scene{
 
         for( int i = 0; i < spheres.getCount(); i++){
             if(let intersection = spheres[i].Intersects(ray)){
-                IntersectionInfo i = intersection;
-                if(i.t < closestT){
-                    closestIntersection = i;
-                    closestT = i.t;
+                IntersectionInfo intersect = intersection;
+                if(intersect.t < closestT){
+                    closestIntersection = intersect;
+                    closestT = intersect.t;
                 }
             }
         }  
         
-        if(closestIntersection.hasValue){
-            return closestIntersection;
-        }else{
-            return {};
-        }
+        return closestIntersection;
     }
 };

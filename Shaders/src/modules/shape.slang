@@ -35,16 +35,16 @@ public struct Sphere : IShape{
             // calculate the x1 of the quadratic equation to have the front point and not the one in the back 
             float t = (-b -sqrt(discriminatn)) / (2 * a);
 
-                // ray hits sphere more than once 
-                if(t >= 0){
-                    IntersectionInfo intersectionInfo;
-                    intersectionInfo.t = t;
-                    // get the hit poinnt
-                    intersectionInfo.hitPoint = ray.Origin + ray.Direction * t;
-                    intersectionInfo.alebdo = colour.xyz;
-                    intersectionInfo.normal = normalize(intersectionInfo.hitPoint - position.xyz);
-                    return intersectionInfo;
-                }
+            // ray hits sphere more than once 
+            if(t >= 0){
+                IntersectionInfo intersectionInfo;
+                intersectionInfo.t = t;
+                // get the hit poinnt
+                intersectionInfo.hitPoint = ray.Origin + ray.Direction * t;
+                intersectionInfo.alebdo = colour.xyz;
+                intersectionInfo.normal = normalize(intersectionInfo.hitPoint - position.xyz);
+                return intersectionInfo;
+            }
         }
         return {};
     }
