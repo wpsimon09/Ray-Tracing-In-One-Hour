@@ -28,9 +28,9 @@ void RenderingEngine::run()
 }
 
 VkBool32 RenderingEngine::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
-                                      VkDebugUtilsMessageTypeFlagsEXT             messageType,
-                                      const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-                                      void*                                       pUserData)
+                                        VkDebugUtilsMessageTypeFlagsEXT             messageType,
+                                        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                                        void*                                       pUserData)
 {
     if(messageSeverity > VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
     {
@@ -659,7 +659,7 @@ void RenderingEngine::CreateShaderStorageBuffer()
         CreateBuffer(bufferInfo, m_ssbo[i], m_ssboMemory[i]);
 
         vkMapMemory(m_device, m_ssboMemory[i], 0, bufferInfo.size, 0, &m_ssboMappedPointer[i]);
-        memcpy(m_ssboMappedPointer[i], m_scene.data(), (size_t)bufferInfo.size);
+        memcpy(m_ssboMappedPointer[i], m_scene.data(), bufferInfo.size);
     }
 }
 
@@ -1135,7 +1135,7 @@ void RenderingEngine::UpdateUniformBuffer(uint32_t currentImage)
     DrawImGui();
 
     // copy the ssbo
-    memcpy(m_ssboMappedPointer[currentImage], m_scene.data(), m_ssbo.size() * sizeof(Sphere));
+    memcpy(m_ssboMappedPointer[currentImage], m_scene.data(), m_scene.size() * sizeof(Sphere));
 
     UniformBufferObject ubo{};
     ubo.view        = m_camera->getViewMatrix();
@@ -1326,6 +1326,7 @@ void RenderingEngine::FrameBufferResizeCallback(GLFWwindow* window, int width, i
 
 void RenderingEngine::MousePositionCallback(GLFWwindow* window, double xpos, double ypos)
 {
+
     auto app      = reinterpret_cast<RenderingEngine*>(glfwGetWindowUserPointer((window)));
     auto pointerX = (float)xpos;
     auto pointerY = (float)ypos;
@@ -1346,12 +1347,12 @@ void RenderingEngine::MousePositionCallback(GLFWwindow* window, double xpos, dou
     xOffset *= 0.01;
     yOffset *= 0.01;
 
-    if(xOffset != 0.0 && app->m_isMousePressed)
+    if(xOffset != 0.0 && app->m_isMousePressed && !ImGui::GetIO().WantCaptureMouse)
     {
         app->m_camera->rotateAzimutn(xOffset);
     }
 
-    if(yOffset != 0.0 && app->m_isMousePressed)
+    if(yOffset != 0.0 && app->m_isMousePressed && !ImGui::GetIO().WantCaptureMouse)
     {
         app->m_camera->rotatePolar(-yOffset);
     }

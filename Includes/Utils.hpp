@@ -5,6 +5,7 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 #include <GLFW/glfw3.h>
+#include <glm/gtc/random.hpp>
 #include <iostream>
 #include <optional>
 #include <set>
@@ -347,24 +348,34 @@ static inline std::vector<Sphere> GenerateScene()
 {
     std::vector<Sphere> spheres;
 
-    spheres.push_back({glm::vec4(0.0f, -1.0f, 0.0f, 1.0f), glm::vec4(0.7f, 0.7f, 0.7f, 1.0f), glm::vec4(0.9f, 0.0f, 0.0f, 0.0f)});
+    // --- Big sphere: The planet ---
+    glm::vec3 planetCenter = glm::vec3(0.0f, 0.0f, 0.0f);
+    float     planetRadius = 1.0f;
+    glm::vec4 planetColor  = glm::vec4(0.2f, 0.5f, 1.0f, 1.0f);  // blue planet
+    glm::vec4 planetMat    = glm::vec4(0.5f, 0.5f, 0.5f, 0.0f);
 
-    float radius             = 0.2f;
-    float angleStep          = glm::radians(72.0f);
-    float distanceFromCenter = 1.0f;
+    spheres.push_back({glm::vec4(planetCenter, planetRadius), planetColor, planetMat});
 
-    for(int i = 0; i < 5; i++)
+    // --- Small spheres: On surface ---
+    int   numSmallSpheres = 20;
+    float smallRadius     = 0.1f;
+
+    for(int i = 0; i < numSmallSpheres; i++)
     {
-        float angle = i * angleStep;
-        float x     = distanceFromCenter * sin(angle);
-        float z     = distanceFromCenter * cos(angle);
-        float y     = sqrt(distanceFromCenter * distanceFromCenter - x * x - z * z);
+        // Random direction on the sphere surface
+        glm::vec3 dir = glm::sphericalRand(1.0f);  // random unit vector
 
-        spheres.push_back({glm::vec4(x, y, z, radius), glm::vec4(sin(angle) * 0.5f + 0.5f, cos(angle) * 0.5f + 0.5f, 0.5f, 1.0f),
-                           glm::vec4(0.1f, 0.9f, 0.0f, 0.0f)});
+        // Position the small sphere so it rests on the surface
+        glm::vec3 pos = planetCenter + dir * (planetRadius + smallRadius * 0.5f);
+
+        // Slightly vary the color
+        glm::vec4 color = glm::vec4(0.4f + 0.4f * glm::linearRand(0.0f, 1.0f), 0.8f + 0.2f * glm::linearRand(0.0f, 1.0f),
+                                    0.3f + 0.2f * glm::linearRand(0.0f, 1.0f), 1.0f);
+
+        glm::vec4 mat = glm::vec4(0.3f, 0.7f, 0.2f, 0.0f);
+
+        spheres.push_back({glm::vec4(pos, smallRadius), color, mat});
     }
-
-    spheres.push_back({glm::vec4(0.0f, 2.0f, 0.0f, 0.3f), glm::vec4(1.0f, 0.2f, 0.2f, 1.0f), glm::vec4(0.5f, 0.5f, 2.0f, 0.0f)});
 
     return spheres;
 }

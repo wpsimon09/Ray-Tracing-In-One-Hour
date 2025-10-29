@@ -7,7 +7,7 @@ import sys
 SLANGC_PATH = r"/home/wpsimon09/SDKs/slang/bin/slangc" 
 
 # Shader source file
-INPUT_FILE = "main.slang"
+INPUT_FILE = "src/main.slang"
 
 # Output directory for SPIR-V files
 OUT_DIR = "spirv"

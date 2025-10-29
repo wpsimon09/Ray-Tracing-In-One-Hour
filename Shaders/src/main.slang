@@ -1,5 +1,6 @@
 import camera;
 import shape;
+import scene;
 
 struct UnifromBuffer
 {
@@ -38,6 +39,14 @@ float4 fragmentMain(VertexOutput fsIn) : SV_Target
     var camera = PinholeCamera(halfTanFov, aspect, GlobalData.view, GlobalData.inverseView);
 
     var ray = camera.GenerateRayToWorld(fsIn.uv * 2.0f - 1.0f);
+    var scene = Scene(SceneData);
 
-    return float4(ray.Direction,  1.0);
+    if(let i = scene.GetClosestIntersection(ray)){
+        camera.film = i.alebdo;
+    }else{
+        camera.film = float3(0.4);
+    }  
+
+    return float4(camera.film, 1.0);
+
 }
