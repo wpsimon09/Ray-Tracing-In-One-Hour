@@ -63,7 +63,7 @@ float4 fragmentMain(VertexOutput fsIn) : SV_Target
 
             var brdfSample = hit.material.GetBrdf().Sample(-ray.Direction, hit.normal, u);
             float3 f = hit.material.GetBrdf().f(-ray.Direction, hit.normal, brdfSample.wi);
-            payLoad.throughPut *= f ;
+            payLoad.throughPut *= f / brdfSample.PDF;
             
             ray.Direction = brdfSample.wi;
             ray.Origin = hit.hitPoint;
@@ -71,8 +71,10 @@ float4 fragmentMain(VertexOutput fsIn) : SV_Target
         }
         // we dont have a hit so accumulate inderect light 
         else{
-            payLoad.radiance += float3(0.2, 0.2, 0.7) * payLoad.throughPut;
-            break;
+
+                float3 skyColour = SampleSkyColour(ray);
+                payLoad.radiance += skyColour * payLoad.throughPut;
+                break;
         }  
     }
 

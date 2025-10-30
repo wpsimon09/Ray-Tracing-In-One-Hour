@@ -91,3 +91,15 @@ internal float3 toWorld(float3 local, float3 N){
     return normalize(local.x * T + local.y * B + local.z * N);
 }
 
+public float3 SampleSkyColour(RayDesc ray){
+    float3 skyTop    = float3(0.2, 0.4, 0.9); // blue sky
+    float3 skyBottom = float3(0.6, 0.6, 0.6); // gray horizon
+        
+    // Clamp direction.y to [0,1] for gradient interpolation
+    float t = saturate(ray.Direction.y * 0.5f + 0.5f);
+        
+    // Optionally make gradient more curved
+    t = pow(t, 1.5f);
+        
+    return lerp(skyBottom, skyTop, t);
+}
