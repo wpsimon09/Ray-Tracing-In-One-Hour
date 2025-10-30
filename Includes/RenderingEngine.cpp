@@ -48,7 +48,9 @@ void RenderingEngine::InitWindow()
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    m_window = glfwCreateWindow(WIDTH, HEIGHT, "Ray tracing in one hour", nullptr, nullptr);
+    this->m_width  = WIDTH;
+    this->m_height = HEIGHT;
+    m_window       = glfwCreateWindow(WIDTH, HEIGHT, "Ray tracing in one hour", nullptr, nullptr);
     CreateCamera();
     glfwSetWindowUserPointer(m_window, this);
     glfwSetFramebufferSizeCallback(m_window, FrameBufferResizeCallback);
@@ -1005,39 +1007,44 @@ void RenderingEngine::DrawImGui()
 
         ImGui::TreePop();
     }
-    ImGui::SeparatorText("Spheres in the scene");
-
-    for(size_t i = 0; i < m_scene.size(); ++i)
+    if(ImGui::TreeNode("Settings"))
     {
-        Sphere& s = m_scene[i];
-        ImGui::PushID(static_cast<int>(i));
-        ImGui::Separator();
-        ImGui::Text("Sphere %zu", i);
-
-        ImGui::DragFloat3("Position", &s.position[0], 0.05f);
-        ImGui::DragFloat("Radius", &s.position[3], 0.01f, 0.001f, 100.0f);
-
-        float color[3] = {s.colour.x, s.colour.y, s.colour.z};
-        if(ImGui::ColorEdit3("Color", color))
-        {
-            s.colour.x = color[0];
-            s.colour.y = color[1];
-            s.colour.z = color[2];
-        }
-
-        float emission = s.colour.w;
-        if(ImGui::DragFloat("Emission", &emission, 0.0f))
-        {
-            s.colour.w             = emission;
-            s.materialProperties.z = emission;  // keep material emission in sync
-        }
-
-        ImGui::SliderFloat("Roughness", &s.materialProperties.x, 0.0f, 1.0f);
-        ImGui::SliderFloat("Metalness", &s.materialProperties.y, 0.0f, 1.0f);
-
-        ImGui::Separator();
-        ImGui::PopID();
+        ImGui::DragInt("Bounces", &m_bounceCount, 1, 0);
+        ImGui::DragInt("Rays per pixel", &m_raysPerPixel, 1.0, 0);
+        ImGui::TreePop();
     }
+    if(ImGui::TreeNode("Scene"))
+    {
+        if(ImGui::Button("Regenerate scene"))
+        {
+            m_scene = GenerateScene();
+        }
+        for(size_t i = 0; i < m_scene.size(); ++i)
+        {
+            Sphere& s = m_scene[i];
+            ImGui::PushID(static_cast<int>(i));
+            ImGui::Separator();
+            ImGui::Text("Sphere %zu", i);
+
+            ImGui::DragFloat3("Position", &s.position[0], 0.05f);
+            ImGui::DragFloat("Radius", &s.position[3], 0.01f, 0.001f, 100.0f);
+
+
+            ImGui::ColorEdit3("Color", &s.colour.x);
+            ImGui::ColorEdit3("Emission", &s.emission.x);
+            ImGui::DragFloat("Emissive strength", &s.emission.w, 1.0, 0.0);
+
+
+            ImGui::SliderFloat("Roughness", &s.materialProperties.x, 0.0f, 1.0f);
+            ImGui::SliderFloat("Metalness", &s.materialProperties.y, 0.0f, 1.0f);
+
+            ImGui::Separator();
+            ImGui::PopID();
+        }
+        ImGui::TreePop();
+    }
+
+
     ImGui::End();
 
     ImGui::Render();
@@ -1141,9 +1148,12 @@ void RenderingEngine::UpdateUniformBuffer(uint32_t currentImage)
     ubo.view        = m_camera->getViewMatrix();
     ubo.inverseView = m_camera->getInverseView();
 
-    ubo.viewData.x = m_camera->getAspect();
-    ubo.viewData.y = m_camera->getTanHalfFov();
-    ubo.viewData.z = static_cast<int>(m_scene.size() / sizeof(Sphere));
+    ubo.viewData.x        = m_camera->getAspect();
+    ubo.viewData.y        = m_camera->getTanHalfFov();
+    ubo.viewData.z        = m_bounceCount;
+    ubo.viewData.w        = m_raysPerPixel;
+    ubo.aditionalParams.x = m_width;
+    ubo.aditionalParams.y = m_height;
 
     memcpy(m_uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 }
@@ -1322,6 +1332,8 @@ void RenderingEngine::FrameBufferResizeCallback(GLFWwindow* window, int width, i
     auto app                  = reinterpret_cast<RenderingEngine*>(glfwGetWindowUserPointer((window)));
     app->m_frameBufferResized = true;
     app->m_camera->update(width, height);
+    app->m_width  = width;
+    app->m_height = height;
 }
 
 void RenderingEngine::MousePositionCallback(GLFWwindow* window, double xpos, double ypos)

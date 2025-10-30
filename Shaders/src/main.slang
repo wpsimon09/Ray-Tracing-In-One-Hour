@@ -1,12 +1,15 @@
 import camera;
 import shape;
 import scene;
+import material;
+import payload;
 
 struct UnifromBuffer
 {
     float4x4 view;
     float4x4 inverseView;
-    float4 viewParams;
+    float4 viewParams; // z - bounce count | w - rays per pixel 
+    float4 aditionalParams;
 }
 
 struct VertexOutput
@@ -33,20 +36,47 @@ VertexOutput vertexMain(uint VertexIndex: SV_VertexID)
 [shader("fragment")]
 float4 fragmentMain(VertexOutput fsIn) : SV_Target
 {
+    int bounceCount  = (int)GlobalData.viewParams.z;
+    int raysPerPixel = (int)GlobalData.viewParams.w;
     float halfTanFov = GlobalData.viewParams.y;
-    float aspect = GlobalData.viewParams.x;
+    float aspect     = GlobalData.viewParams.x;
     
+
+    uint2 numPixels = int2((int)GlobalData.aditionalParams.x, (int)GlobalData.aditionalParams.y);
+    uint2 pixelCoord = (fsIn.uv) * numPixels;
+    uint pixelIndex = pixelCoord.y * numPixels.x + pixelCoord.x;
+    uint u = pixelIndex;
+
     var camera = PinholeCamera(halfTanFov, aspect, GlobalData.view, GlobalData.inverseView);
 
     var ray = camera.GenerateRayToWorld(fsIn.uv * 2.0f - 1.0f);
     var scene = Scene(SceneData);
 
-    if(let i = scene.GetClosestIntersection(ray)){
-        camera.film = i.alebdo;
-    }else{
-        camera.film = float3(0.4);
-    }  
+    RayPayload payLoad = {};
 
-    return float4(camera.film, 1.0);
+    int numSamples = 1;
+    for(int i = 0; i < bounceCount; i++){
+        if(let hit = scene.GetClosestIntersection(ray)){
+            
+            // we have a hit 
+            payLoad.radiance += (hit.material.emmision * hit.material.emissionStrength) * payLoad.throughPut;
 
+            var brdfSample = hit.material.GetBrdf().Sample(-ray.Direction, hit.normal, u);
+            float3 f = hit.material.GetBrdf().f(-ray.Direction, hit.normal, brdfSample.wi);
+            payLoad.throughPut *= f ;
+            
+            ray.Direction = brdfSample.wi;
+            ray.Origin = hit.hitPoint;
+            numSamples++;
+        }
+        // we dont have a hit so accumulate inderect light 
+        else{
+            payLoad.radiance += float3(0.2, 0.2, 0.7) * payLoad.throughPut;
+            break;
+        }  
+    }
+
+    camera.film = (1/(float)numSamples) * payLoad.radiance;
+
+    return float4(camera.film, 1.0); // grayscale
 }

@@ -196,8 +196,10 @@ class RenderingEngine
     double                    m_lastY;
     bool                      m_isMousePressed = false;
     bool                      m_isFirstMouse   = true;
+    int                       m_bounceCount = 2, m_raysPerPixel = 1;
     std::vector<Sphere>       m_scene;
     std::string               m_physicalDeviceName = "";
+    int                       m_width, m_height;
 };
 
 #endif  //HELLOTRIANGLE_HPP

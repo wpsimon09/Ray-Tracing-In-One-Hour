@@ -77,7 +77,8 @@ struct UniformBufferObject
 {
     glm::mat4 view;
     glm::mat4 inverseView;
-    glm::vec4 viewData;  // x - aspect, y - fov2tan, z - sphere count
+    glm::vec4 viewData;         // x - aspect, y - fov2tan, z - sphere count
+    glm::vec4 aditionalParams;  // x - width, y - height
 };
 
 
@@ -86,4 +87,5 @@ struct Sphere
     glm::vec4 position;            // xyz: positon | w: radius
     glm::vec4 colour;              // xyz: rgb | w: empty
     glm::vec4 materialProperties;  // x: roughness | y: metalness | z: emission | w: unused
+    glm::vec4 emission;
 };

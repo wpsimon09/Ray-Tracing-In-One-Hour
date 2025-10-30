@@ -4,11 +4,12 @@ import material;
 
 
 public struct IntersectionInfo{
-    public float t = {float.maxValue};
-    public float3 hitPoint = {0.0};
-    public float3 normal = {0.0};
-    public Material material = {};
-    public float3 alebdo = {0.0};
+    public float t = {float.maxValue}; // parameteric t value to know where on ray we have hit 
+
+    public float3 hitPoint = {0.0}; // world space position of the point we have hit
+    public float3 normal = {0.0}; // normal vector;
+
+    public Material material = {}; // mateiral
 } 
 
 public interface IShape{
@@ -19,7 +20,8 @@ public interface IShape{
 public struct Sphere : IShape{
     internal float4 position; // xyz: positon | w: radius
     internal float4 colour;  // xyz: rgb | w: empty
-    internal float4 matrialProperties; // x: roughness | y: metalness | z: emission | w: unused
+    internal float4 matrialProperties; // x: roughness | y: metalness | z: unused | w: unused
+    internal float4 emission; // xyz : rgb | w: emission strength
 
     public Optional<IntersectionInfo> Intersects(RayDesc ray){
         float radius = position.w;
@@ -29,7 +31,7 @@ public struct Sphere : IShape{
         float b = 2 * dot(offsetRayOrigin, ray.Direction);
         float c = dot(offsetRayOrigin, offsetRayOrigin) - radius * radius;
 
-        float discriminatn = b * b  - 4 * a * c;
+        float discriminatn = b * b - 4 * a * c;
         if(discriminatn >= 0){
 
             // calculate the x1 of the quadratic equation to have the front point and not the one in the back 
@@ -37,12 +39,18 @@ public struct Sphere : IShape{
 
             // ray hits sphere more than once 
             if(t >= 0){
-                IntersectionInfo intersectionInfo;
+                IntersectionInfo intersectionInfo = {};
                 intersectionInfo.t = t;
                 // get the hit poinnt
                 intersectionInfo.hitPoint = ray.Origin + ray.Direction * t;
-                intersectionInfo.alebdo = colour.xyz;
-                intersectionInfo.normal = normalize(intersectionInfo.hitPoint - position.xyz);
+                float3 N = normalize(intersectionInfo.hitPoint - position.xyz);
+                intersectionInfo.normal = N;
+                intersectionInfo.material.albedo = colour.xyz;
+                intersectionInfo.material.emmision = emission.xyz;
+                intersectionInfo.material.emissionStrength = emission.w;
+                intersectionInfo.material.metalnes = matrialProperties.x;
+                intersectionInfo.material.roughnes = matrialProperties.y;
+
                 return intersectionInfo;
             }
         }
