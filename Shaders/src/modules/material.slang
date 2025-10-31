@@ -1,7 +1,15 @@
 module material;
 import randomValues;
 
+/*
+Reference for brdfs:
+[0] https://github.com/boksajak/referencePT/blob/master/shaders/brdf.h
+[1] https://www.pbr-book.org/4ed/Reflection_Models/Specular_Reflection_and_Transmission
+*/
+
 public static const float ONE_OVER_PI = 1/float.getPi();
+public static const float ONE_OVER_2_PI = 1 / (2* float.getPi());
+public static const float TWO_PI = 2 * float.getPi();
 
 public struct Material{
     public float3 albedo = {0.0};
@@ -73,6 +81,40 @@ public struct DiffuseBrdf : IBRDF{
     }
 }
 
+public struct  SpecularBrdf : IBRDF{
+    float3 albedo;
+    float roughness;
+    float metallnes;
+
+    internal __init(float3 colour, float roughness, float metallnes){
+        albedo = colour;
+        roughness = roughness;
+        metallnes = metallnes;
+    }
+
+
+
+    public float3 f(float3 wo, float3 N, float3 wi){
+        float alpha = roughness * roughness; // see Diney`s paper for alpha 
+        float shnininess = beckmannAlphaToShininess(alpha);
+
+        float cosTheta = dot(N, wo);
+        float3 F = fresnellShlick(cosTheta, albedo, metallnes);
+        float3 R = reflect(-wi, N);
+
+        return F * phongNormalizationTerm(shnininess) * pow(max(0.0, dot(R, wo)), shnininess) * cosTheta;
+    }
+
+    public BrdfSample Sample(float3 wo, float3 N, inout uint u){
+
+    }
+}
+
+// For derivation see "Phong Normalization Factor derivation" by Giesen
+float phongNormalizationTerm(float shininess) {
+
+	return (1.0f + shininess) * ONE_OVER_2_PI;
+}
 
 internal void constructLocalFrame(float3 N, out float3 T, out float3 B){
     // construct local frame for sampling 
@@ -81,6 +123,29 @@ internal void constructLocalFrame(float3 N, out float3 T, out float3 B){
 
     T = normalize(cross(up, N));
     B = cross(N, T);
+}
+
+internal float3 toLocal(float3 world, float3 N){
+    float3 T, B;
+    constructLocalFrame(N, T, B);
+    return float3(dot(world, T), dot(world, B), dot(world, N));
+}
+
+// Converts Beckmann roughness (alpha) to Phong's exponent (shininess)
+// Source: "Microfacet Models for Refraction through Rough Surfaces" by Walter et al.
+internal float beckmannAlphaToShininess(float alpha) {
+	return 2.0f / min(0.9999f, max(0.0002f, (alpha * alpha))) - 2.0f;
+}
+
+// Approximation for Fresnel term of the specular reflection evaluation
+// fresnell term is dependand on the direction and gives how much light is reflected and refracted from the surface 
+// Srouce: https://en.wikipedia.org/wiki/Schlick%27s_approximation
+internal float3 fresnellShlick(float cosTheta, float3 albedo, float metallnes )
+{
+
+    float3 F0 = float3(0.4);
+    F0 = lerp(F0, albedo.xyz, metallnes);
+            return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
 internal float3 toWorld(float3 local, float3 N){
