@@ -18,8 +18,26 @@ public struct Material{
     public float3 emmision = {0.0};
     public float emissionStrength = {0.0};
 
-    public IBRDF GetBrdf(){
-        return DiffuseBrdf(albedo, metalnes);
+    public IBRDF GetBrdf(inout uint u){
+
+        float3 F0 = lerp(float3(0.4), albedo.xyz, metalnes);
+        float3 Ks = F0;
+        float3 Kd = 1.0 - Ks;
+
+        float p_specular  = max(max(Ks.x, Ks.y), Ks.z);
+
+        bool sampleSpecular = RandomValue(u) < p_specular;
+
+        
+        return SpecularBrdf(albedo, roughnes, metalnes);
+        /*
+        if(sampleSpecular){
+            return SpecularBrdf(albedo, roughnes, metalnes);
+        }else{
+            return DiffuseBrdf(albedo, metalnes);
+        }
+          */  
+
     }
 }
 
@@ -85,28 +103,55 @@ public struct  SpecularBrdf : IBRDF{
     float3 albedo;
     float roughness;
     float metallnes;
+    float shnininess = 0.0;
 
     internal __init(float3 colour, float roughness, float metallnes){
-        albedo = colour;
-        roughness = roughness;
-        metallnes = metallnes;
+        this.albedo = colour;
+        this.roughness = roughness;
+        this.metallnes = metallnes;
+        this.shnininess = beckmannAlphaToShininess(roughness * roughness);
     }
 
 
 
     public float3 f(float3 wo, float3 N, float3 wi){
         float alpha = roughness * roughness; // see Diney`s paper for alpha 
-        float shnininess = beckmannAlphaToShininess(alpha);
 
-        float cosTheta = dot(N, wo);
-        float3 F = fresnellShlick(cosTheta, albedo, metallnes);
         float3 R = reflect(-wi, N);
+        float cosTheta = saturate(dot(wo, R));
 
-        return F * phongNormalizationTerm(shnininess) * pow(max(0.0, dot(R, wo)), shnininess) * cosTheta;
+        float3 F0 = float3(0.4);
+        F0 = lerp(F0, albedo.xyz, metallnes);
+
+        return F0 * (phongNormalizationTerm(shnininess) * pow(max(0.0f, cosTheta), shnininess));
     }
 
+    // Samples a Phong distribution lobe oriented along +Z axis
+    // Source: "Sampling Transformations Zoo" in Ray Tracing Gems by Shirley et al.
     public BrdfSample Sample(float3 wo, float3 N, inout uint u){
+        BrdfSample result;
+        if(roughness < 0.05 && metallnes > 0.95){
+            // do perfect mirror instead of sampling phong distribution 
+            result.wi = reflect(-wo, N);
+            result.PDF = 1.0f;
+            return result;
+        }
+        float2 us = float2(RandomValue(u), RandomValue(u));
+        
+        float cosTheta = pow(1.0f - us.x, 1.0 / (1.0f + shnininess));
+        float sinTheta = sqrt(1.0f - cosTheta * cosTheta);
 
+        float phi = TWO_PI * us.y;
+
+        // specular lobe is scaled by the shininess
+        result.PDF =  phongNormalizationTerm(shnininess) * pow(cosTheta, shnininess);
+        float3 wi_T = float3(
+		    cos(phi) * sinTheta,
+		    sin(phi) * sinTheta,
+		    cosTheta);
+        result.wi = toWorld(wi_T, N);
+
+        return result;
     }
 }
 
@@ -137,16 +182,6 @@ internal float beckmannAlphaToShininess(float alpha) {
 	return 2.0f / min(0.9999f, max(0.0002f, (alpha * alpha))) - 2.0f;
 }
 
-// Approximation for Fresnel term of the specular reflection evaluation
-// fresnell term is dependand on the direction and gives how much light is reflected and refracted from the surface 
-// Srouce: https://en.wikipedia.org/wiki/Schlick%27s_approximation
-internal float3 fresnellShlick(float cosTheta, float3 albedo, float metallnes )
-{
-
-    float3 F0 = float3(0.4);
-    F0 = lerp(F0, albedo.xyz, metallnes);
-            return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
-}
 
 internal float3 toWorld(float3 local, float3 N){
     // transfer from local coordinate system to the world coordinate system
