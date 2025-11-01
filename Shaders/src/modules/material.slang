@@ -103,6 +103,7 @@ public struct  SpecularBrdf : IBRDF{
     float3 albedo;
     float roughness;
     float metallnes;
+    float3 F0 = 0.4;
     float shnininess = 0.0;
 
     internal __init(float3 colour, float roughness, float metallnes){
@@ -110,20 +111,14 @@ public struct  SpecularBrdf : IBRDF{
         this.roughness = roughness;
         this.metallnes = metallnes;
         this.shnininess = beckmannAlphaToShininess(roughness * roughness);
+        F0 = lerp(F0, albedo, metallnes);
     }
 
 
 
     public float3 f(float3 wo, float3 N, float3 wi){
-        float alpha = roughness * roughness; // see Diney`s paper for alpha 
-
         float3 R = reflect(-wi, N);
-        float cosTheta = saturate(dot(wo, R));
-
-        float3 F0 = float3(0.4);
-        F0 = lerp(F0, albedo.xyz, metallnes);
-
-        return F0 * (phongNormalizationTerm(shnininess) * pow(max(0.0f, cosTheta), shnininess));
+        return F0 * (phongNormalizationTerm(shnininess) * pow(max(0.0f, dot(R, wo)), shnininess) * dot(N, wi));
     }
 
     // Samples a Phong distribution lobe oriented along +Z axis
@@ -149,7 +144,10 @@ public struct  SpecularBrdf : IBRDF{
 		    cos(phi) * sinTheta,
 		    sin(phi) * sinTheta,
 		    cosTheta);
-        result.wi = toWorld(wi_T, N);
+
+        float3 R = reflect(-wo, N);
+
+        result.wi = toWorld(wi_T, R);
 
         return result;
     }
@@ -176,13 +174,6 @@ internal float3 toLocal(float3 world, float3 N){
     return float3(dot(world, T), dot(world, B), dot(world, N));
 }
 
-// Converts Beckmann roughness (alpha) to Phong's exponent (shininess)
-// Source: "Microfacet Models for Refraction through Rough Surfaces" by Walter et al.
-internal float beckmannAlphaToShininess(float alpha) {
-	return 2.0f / min(0.9999f, max(0.0002f, (alpha * alpha))) - 2.0f;
-}
-
-
 internal float3 toWorld(float3 local, float3 N){
     // transfer from local coordinate system to the world coordinate system
     // this is not covered in the workshop please see chapter 3.1 - Coordinate system in PBRT (https://pbr-book.org/4ed/Geometry_and_Transformations/Coordinate_Systems)
@@ -190,6 +181,13 @@ internal float3 toWorld(float3 local, float3 N){
     constructLocalFrame(N, T, B);
     return normalize(local.x * T + local.y * B + local.z * N);
 }
+// Converts Beckmann roughness (alpha) to Phong's exponent (shininess)
+// Source: "Microfacet Models for Refraction through Rough Surfaces" by Walter et al.
+internal float beckmannAlphaToShininess(float alpha) {
+	return 2.0f / min(0.9999f, max(0.0002f, (alpha * alpha))) - 2.0f;
+}
+
+
 
 public float3 SampleSkyColour(RayDesc ray){
     float3 skyTop    = float3(0.2, 0.4, 0.9); // blue sky
