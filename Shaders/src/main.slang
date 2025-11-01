@@ -34,19 +34,26 @@ VertexOutput vertexMain(uint VertexIndex: SV_VertexID)
     return out;
 }
 
+//============================================================
+// This piece of code is running on every pixel in the window
+
 [shader("fragment")]
 float4 fragmentMain(VertexOutput fsIn) : SV_Target
 {
+    // required data for ray tracing 
     int bounceCount  = (int)GlobalData.viewParams.z;
     int raysPerPixel = (int)GlobalData.viewParams.w;
     float halfTanFov = GlobalData.viewParams.y;
     float aspect     = GlobalData.viewParams.x;
-    
-
     uint2 numPixels = int2((int)GlobalData.aditionalParams.x, (int)GlobalData.aditionalParams.y);
     uint2 pixelCoord = (fsIn.uv) * numPixels;
     uint pixelIndex = pixelCoord.y * numPixels.x + pixelCoord.x;
     uint u = pixelIndex;
 
-    return float4(fsIn.uv, 1.0); // grayscale
+    //=================================
+    // We start here 
+
+
+
+    return float4(fsIn.uv, 1.0); // colour that this pixel will have (float4 = r, g, b, a)
 }
