@@ -103,10 +103,10 @@ public struct  SpecularBrdf : IBRDF{
 
     internal __init(float3 colour, float roughness, float metallnes){
         this.albedo = colour;
-        this.roughness = 1.0  - roughness;
-        this.metallnes = metallnes;
-        this.shnininess = beckmannAlphaToShininess(roughness * roughness);
-        F0 = lerp(0.4, albedo, metallnes);
+        this.roughness = roughness;
+        this.metallnes = 1.0 - metallnes;
+        this.shnininess = beckmannAlphaToShininess(this.roughness * this.roughness);
+        F0 = lerp(0.4, albedo, this.metallnes);
     }
 
 

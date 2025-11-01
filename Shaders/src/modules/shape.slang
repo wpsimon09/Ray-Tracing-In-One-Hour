@@ -48,8 +48,8 @@ public struct Sphere : IShape{
                 intersectionInfo.material.albedo = colour.xyz;
                 intersectionInfo.material.emmision = emission.xyz;
                 intersectionInfo.material.emissionStrength = emission.w;
-                intersectionInfo.material.metalnes = matrialProperties.x;
-                intersectionInfo.material.roughnes = matrialProperties.y;
+                intersectionInfo.material.roughnes = matrialProperties.x;
+                intersectionInfo.material.metalnes = matrialProperties.y;
 
                 return intersectionInfo;
             }
