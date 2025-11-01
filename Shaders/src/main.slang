@@ -79,8 +79,8 @@ float4 fragmentMain(VertexOutput fsIn) : SV_Target
             }
             // we dont have a hit so accumulate inderect light 
             else{
-                float3 skyColour = SampleSkyColour(ray);
-                payLoad.radiance += skyColour * payLoad.throughPut;
+                float3 sky = SampleSkyColour(ray);
+                payLoad.radiance += sky * payLoad.throughPut;
                 break;
             }  
         }

@@ -27,7 +27,7 @@ public struct Material{
         float p_specular  = max(max(Ks.x, Ks.y), Ks.z);
 
         bool sampleSpecular = RandomValue(u) < p_specular;
-
+        
         if(sampleSpecular){
             return SpecularBrdf(albedo, roughnes, metalnes);
         }else{
@@ -74,7 +74,6 @@ public struct DiffuseBrdf : IBRDF{
         float2 us;
         us.x = RandomValue(u);
         us.y = RandomValue(u);
-    
 
         float a = sqrt(us.x);
         float b = 2 * float.getPi() * us.y;
@@ -185,15 +184,17 @@ internal float beckmannAlphaToShininess(float alpha) {
 
 
 
+// source: https://www.youtube.com/watch?v=Qz0KTGYJtUk&t=2s
 public float3 SampleSkyColour(RayDesc ray){
-    float3 skyTop    = float3(0.2, 0.4, 0.9); // blue sky
-    float3 skyBottom = float3(0.6, 0.6, 0.6); // gray horizon
+    float3 SkyColorHorizon = float3(1.0, 1.0, 1.0);
+    float3 SkyColorZenith = float3(0.4, 0.4, 1.0);
+    float3 GroundColor = float3(0.4, 0.4, 0.4);
+
+    float3 ray_d = ray.Direction;
+
+    float skyGradientT = pow(smoothstep(0, 0.4, ray_d.y), 0.35);
+    float groundToSkyT = smoothstep(-0.01, 0, ray_d.y);
+    float3 skyGradient = lerp(SkyColorHorizon, SkyColorZenith, skyGradientT);
         
-    // Clamp direction.y to [0,1] for gradient interpolation
-    float t = saturate(ray.Direction.y * 0.5f + 0.5f);
-        
-    // Optionally make gradient more curved
-    t = pow(t, 1.5f);
-        
-    return lerp(skyBottom, skyTop, t);
+    return lerp(GroundColor, skyGradient, groundToSkyT);
 }
