@@ -369,10 +369,11 @@ static inline std::vector<Sphere> GenerateScene()
         glm::vec3 pos = planetCenter + dir * (planetRadius + smallRadius * 0.5f);
 
         // Slightly vary the color
-        glm::vec4 color = glm::vec4(0.4f + 0.4f * glm::linearRand(0.0f, 1.0f), 0.8f + 0.2f * glm::linearRand(0.0f, 1.0f),
-                                    0.3f + 0.2f * glm::linearRand(0.0f, 1.0f), 1.0f);
-
-        glm::vec4 mat = glm::vec4(0.3f, 0.7f, 0.2f, 0.0f);
+        glm::vec4 color = glm::vec4(glm::linearRand(0.2f, 1.0f),  // R
+                                    glm::linearRand(0.2f, 1.0f),  // G
+                                    glm::linearRand(0.2f, 1.0f),  // B
+                                    1.0f);
+        glm::vec4 mat   = glm::vec4(glm::linearRand(0.2, 1.0), glm::linearRand(0.1, 1.0), 0.2f, 0.0f);
 
         spheres.push_back({glm::vec4(pos, smallRadius), color, mat});
     }

@@ -2,6 +2,7 @@ import camera;
 import shape;
 import scene;
 import material;
+import randomValues;
 import payload;
 
 struct UnifromBuffer
@@ -49,38 +50,44 @@ float4 fragmentMain(VertexOutput fsIn) : SV_Target
 
     var camera = PinholeCamera(halfTanFov, aspect, GlobalData.view, GlobalData.inverseView);
 
-    var ray = camera.GenerateRayToWorld(fsIn.uv * 2.0f - 1.0f);
+    
     var scene = Scene(SceneData);
+    
+    
+    for(int rayPerpixel = 0; rayPerpixel < raysPerPixel; rayPerpixel++){
 
-    RayPayload payLoad = {};
+        RayPayload payLoad = {};
+        var ray = camera.GenerateRayToWorld(fsIn.uv * 2.0f - 1.0f);
+        int numSamples = 1;
 
-    int numSamples = 1;
-    for(int i = 0; i < bounceCount; i++){
-        if(let hit = scene.GetClosestIntersection(ray)){
-            
-            // we have a hit 
-            payLoad.radiance += (hit.material.emmision * hit.material.emissionStrength) * payLoad.throughPut;
-
-            var brdf = hit.material.GetBrdf(u);
-            var brdfSample = brdf.Sample(-ray.Direction, hit.normal, u);
-            
-            float3 f = brdf.f(-ray.Direction, hit.normal, brdfSample.wi);
-
-            payLoad.throughPut *= f / brdfSample.PDF;
-            
-            ray.Direction = brdfSample.wi;
-            ray.Origin = hit.hitPoint;
-            numSamples++;
+        for(int bounce = 0; bounce < bounceCount; bounce++){
+            if(let hit = scene.GetClosestIntersection(ray)){
+                
+                // we have a hit 
+                payLoad.radiance += (hit.material.emmision * hit.material.emissionStrength) * payLoad.throughPut;
+    
+                var brdf = hit.material.GetBrdf(u);
+                var brdfSample = brdf.Sample(-ray.Direction, hit.normal, u);
+                
+                float3 f = brdf.f(-ray.Direction, hit.normal, brdfSample.wi);
+    
+                payLoad.throughPut *= f / brdfSample.PDF;
+                
+                ray.Direction = brdfSample.wi;
+                ray.Origin = hit.hitPoint;
+                numSamples++;
+            }
+            // we dont have a hit so accumulate inderect light 
+            else{
+                float3 skyColour = SampleSkyColour(ray);
+                payLoad.radiance += skyColour * payLoad.throughPut;
+                break;
+            }  
         }
-        // we dont have a hit so accumulate inderect light 
-        else{
-            float3 skyColour = SampleSkyColour(ray);
-            payLoad.radiance += skyColour * payLoad.throughPut;
-            break;
-        }  
+        camera.film += payLoad.radiance;
     }
+    camera.film = (1.0/(float)raysPerPixel) * camera.film;
 
-    camera.film = (1/(float)numSamples) * payLoad.radiance;
 
     return float4(camera.film, 1.0); // grayscale
 }

@@ -28,15 +28,11 @@ public struct Material{
 
         bool sampleSpecular = RandomValue(u) < p_specular;
 
-        
-        return SpecularBrdf(albedo, roughnes, metalnes);
-        /*
         if(sampleSpecular){
             return SpecularBrdf(albedo, roughnes, metalnes);
         }else{
             return DiffuseBrdf(albedo, metalnes);
         }
-          */  
 
     }
 }
@@ -103,7 +99,7 @@ public struct  SpecularBrdf : IBRDF{
     float3 albedo;
     float roughness;
     float metallnes;
-    float3 F0 = 0.4;
+    float3 F0;
     float shnininess = 0.0;
 
     internal __init(float3 colour, float roughness, float metallnes){
@@ -111,7 +107,7 @@ public struct  SpecularBrdf : IBRDF{
         this.roughness = roughness;
         this.metallnes = metallnes;
         this.shnininess = beckmannAlphaToShininess(roughness * roughness);
-        F0 = lerp(F0, albedo, metallnes);
+        F0 = lerp(0.4, albedo, metallnes);
     }
 
 
@@ -125,12 +121,7 @@ public struct  SpecularBrdf : IBRDF{
     // Source: "Sampling Transformations Zoo" in Ray Tracing Gems by Shirley et al.
     public BrdfSample Sample(float3 wo, float3 N, inout uint u){
         BrdfSample result;
-        if(roughness < 0.05 && metallnes > 0.95){
-            // do perfect mirror instead of sampling phong distribution 
-            result.wi = reflect(-wo, N);
-            result.PDF = 1.0f;
-            return result;
-        }
+
         float2 us = float2(RandomValue(u), RandomValue(u));
         
         float cosTheta = pow(1.0f - us.x, 1.0 / (1.0f + shnininess));
@@ -144,7 +135,12 @@ public struct  SpecularBrdf : IBRDF{
 		    cos(phi) * sinTheta,
 		    sin(phi) * sinTheta,
 		    cosTheta);
-
+        
+        // we use the R as a local frame and not N,
+        /*   N *R - this is where we want to sample next ray and not in the normal direction 
+             | /
+            ----
+        */
         float3 R = reflect(-wo, N);
 
         result.wi = toWorld(wi_T, R);
