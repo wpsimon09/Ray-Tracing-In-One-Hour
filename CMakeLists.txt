@@ -18,7 +18,7 @@ set(SOURCES src/main.cpp
 set(CFLAGS_RELEASE "-O2")
 set(CFLAGS_DEBUG "-g")
 
-set(IMGUI_PATH "${CMAKE_SOURCE_DIR}/Includes/imgui")
+set(IMGUI_PATH "${CMAKE_SOURCE_DIR}/external/imgui")
 file(GLOB IMGUI_SOURCES
         ${IMGUI_PATH}/*.cpp
         ${IMGUI_PATH}/backends/imgui_impl_glfw.h
@@ -32,13 +32,12 @@ file(GLOB IMGUI_SOURCES
 # Find Vulkan, GLFW, and GLM
 find_package(Vulkan REQUIRED)
 find_package(glfw3 3.3 REQUIRED)
-find_package(glm REQUIRED)
 
 # Add executable
 add_executable(${TARGET} ${SOURCES})
 
-# Include GLM headers
-target_include_directories(${TARGET} PRIVATE ${GLM_INCLUDE_DIRS})
+target_include_directories(${TARGET} PRIVATE external/glm)
+
 
 target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC
         ${CMAKE_SOURCE_DIR}/Includes

@@ -1,3 +1,6 @@
-[submodule "Includes/imgui"]
-	path = Includes/imgui
+[submodule "external/imgui"]
+	path = external/imgui
 	url = https://github.com/wpsimon09/imgui.git
+[submodule "external/glm"]
+	path = external/glm
+	url = https://github.com/g-truc/glm.git
