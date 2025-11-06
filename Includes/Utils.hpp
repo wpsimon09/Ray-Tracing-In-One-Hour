@@ -351,7 +351,7 @@ static inline std::vector<Sphere> GenerateScene()
     // --- Big sphere: The planet ---
     glm::vec3 planetCenter = glm::vec3(0.0f, 0.0f, 0.0f);
     float     planetRadius = 1.0f;
-    glm::vec4 planetColor  = glm::vec4(0.2f, 0.5f, 1.0f, 1.0f);  // blue planet
+    glm::vec4 planetColor  = glm::vec4(0.0f, 0.0f, 1.0f, 1.0f);  // blue planet
     glm::vec4 planetMat    = glm::vec4(0.5f, 0.5f, 0.5f, 0.0f);
 
     spheres.push_back({glm::vec4(planetCenter, planetRadius), planetColor, planetMat});
@@ -369,11 +369,29 @@ static inline std::vector<Sphere> GenerateScene()
         glm::vec3 pos = planetCenter + dir * (planetRadius + smallRadius * 0.5f);
 
         // Slightly vary the color
-        glm::vec4 color = glm::vec4(glm::linearRand(0.2f, 1.0f),  // R
-                                    glm::linearRand(0.2f, 1.0f),  // G
-                                    glm::linearRand(0.2f, 1.0f),  // B
-                                    1.0f);
-        glm::vec4 mat   = glm::vec4(glm::linearRand(0.2, 1.0), glm::linearRand(0.1, 1.0), 0.2f, 0.0f);
+
+        glm::vec4 color = glm::vec4();
+
+        // pick a base hue channel strongly
+        float base       = glm::linearRand(0.7f, 1.0f);  // dominant channel
+        float secondary1 = glm::linearRand(0.0f, 0.3f);
+        float secondary2 = glm::linearRand(0.0f, 0.3f);
+
+        // randomly assign base to R, G, or B
+        int channel = rand() % 3;
+        switch(channel)
+        {
+            case 0:
+                color = glm::vec4(base, secondary1, secondary2, 1.0f);
+                break;
+            case 1:
+                color = glm::vec4(secondary1, base, secondary2, 1.0f);
+                break;
+            case 2:
+                color = glm::vec4(secondary1, secondary2, base, 1.0f);
+                break;
+        }
+        glm::vec4 mat = glm::vec4(glm::linearRand(0.2, 1.0), glm::linearRand(0.1, 1.0), 0.2f, 0.0f);
 
         spheres.push_back({glm::vec4(pos, smallRadius), color, mat});
     }

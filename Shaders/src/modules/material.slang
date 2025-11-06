@@ -7,9 +7,9 @@ Reference for brdfs:
 [1] https://www.pbr-book.org/4ed/Reflection_Models/Specular_Reflection_and_Transmission
 */
 
-public static const float ONE_OVER_PI = 1/float.getPi();
-public static const float ONE_OVER_2_PI = 1 / (2* float.getPi());
-public static const float TWO_PI = 2 * float.getPi();
+public static const float ONE_OVER_PI =     1/float.getPi();
+public static const float ONE_OVER_2_PI =   1 / (2* float.getPi());
+public static const float TWO_PI =          2 * float.getPi();
 
 public struct Material{
     public float3 albedo = {0.0};
@@ -104,9 +104,9 @@ public struct  SpecularBrdf : IBRDF{
     internal __init(float3 colour, float roughness, float metallnes){
         this.albedo = colour;
         this.roughness = roughness;
-        this.metallnes = metallnes;
-        this.shnininess = beckmannAlphaToShininess(roughness * roughness);
-        F0 = lerp(0.4, albedo, metallnes);
+        this.metallnes = 1.0 - metallnes;
+        this.shnininess = beckmannAlphaToShininess(this.roughness * this.roughness);
+        F0 = lerp(0.4, albedo, this.metallnes);
     }
 
 
