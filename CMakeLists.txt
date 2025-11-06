@@ -42,9 +42,6 @@ file(GLOB IMGUI_SOURCES
     ${IMGUI_PATH}/backends/imgui_impl_vulkan.h
 )
 
-# Vulkan, GLFW, GLM
-find_package(Vulkan REQUIRED)
-
 # -------------------------------
 # Create executable
 # -------------------------------
@@ -79,16 +76,22 @@ add_library(ImGui STATIC ${IMGUI_SOURCES})
 target_include_directories(ImGui PUBLIC
     ${IMGUI_PATH}
     ${IMGUI_PATH}/backends
+    ${CMAKE_SOURCE_DIR}/external/volk
 )
 
 # GLFW library
 add_subdirectory(external/glfw)
+
+# volk library
+add_subdirectory(external/volk)
+
 # Link to executable
 target_link_libraries(${TARGET} PRIVATE
+    volk    
     glfw
-    Vulkan::Vulkan
     ImGui
 )
+
 
 # -------------------------------
 # Custom targets

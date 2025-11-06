@@ -17,6 +17,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
+
 void RenderingEngine::run()
 {
     InitWindow();
@@ -35,8 +36,6 @@ VkBool32 RenderingEngine::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT  
     if(messageSeverity > VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
     {
 
-        GetSeverity(messageSeverity);
-        GetMessageType(messageType);
         std::cerr << "\n File:\t" << __FILE__ << "\n Message:\t" << pCallbackData->pMessage << "\n Message ID:\t"
                   << pCallbackData->messageIdNumber << "\n Object name:\t" << pCallbackData->pObjects->pObjectName << std::endl;
     }
@@ -89,6 +88,11 @@ void RenderingEngine::CreateCamera()
 
 void RenderingEngine::CreateInstance()
 {
+    if(volkInitialize() != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to load volk");
+    }
+
     if(enableValidationLayers && !this->CheckValidationLayerSupport())
     {
         throw std::runtime_error("Requested validation layers were not found");
@@ -146,6 +150,7 @@ void RenderingEngine::CreateInstance()
     }
     else
     {
+        volkLoadInstance(m_instance);
         std::cout << "Vulkan instance created successfuly \n";
     }
 }
