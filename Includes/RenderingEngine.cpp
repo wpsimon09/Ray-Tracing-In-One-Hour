@@ -8,14 +8,12 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
 
-#include <GLFW/glfw3.h>
 #include <array>
 #include <cstring>
 #include <stdexcept>
 #include <string>
 #include <unistd.h>
 #include <vector>
-#include <vulkan/vulkan_core.h>
 
 
 void RenderingEngine::run()
@@ -93,13 +91,13 @@ void RenderingEngine::CreateInstance()
         throw std::runtime_error("Failed to load volk");
     }
 
-    if(enableValidationLayers && !this->CheckValidationLayerSupport())
+    if(enableValidationLayers)
     {
         throw std::runtime_error("Requested validation layers were not found");
     }
     else
     {
-        std::cout << "Valiation layers found\n";
+        std::cout << "Validation layers disabled \n";
     }
 
     //--------

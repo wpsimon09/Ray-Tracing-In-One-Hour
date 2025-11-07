@@ -8,12 +8,11 @@
 #include "volk.h"
 #include "imgui.h"
 #define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include "glfw/include/GLFW/glfw3.h"
 
 
 #include <vector>
 #include "Utils.hpp"
-#include <glm/glm.hpp>
 #include "Camera/Camera.hpp"
 #include "memory"
 
@@ -24,11 +23,7 @@ constexpr int      MAX_FRAMES_IN_FLIGHT = 2;
 const std::vector<const char*> validationLayers = {"VK_LAYER_KHRONOS_validation"};
 
 
-#ifndef NDEBUG
 const bool enableValidationLayers = false;
-#else
-const bool enableValidationLayers = true;
-#endif
 
 
 class RenderingEngine

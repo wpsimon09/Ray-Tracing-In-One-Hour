@@ -45,3 +45,4 @@
 /.cache
 /.idea
 /release-linux
+/build-windows
