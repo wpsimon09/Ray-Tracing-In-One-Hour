@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(RaytracingInOneHour)
 
+
 # -------------------------------
 # C++ standard
 # -------------------------------
@@ -42,9 +43,6 @@ file(GLOB IMGUI_SOURCES
     ${IMGUI_PATH}/backends/imgui_impl_vulkan.h
 )
 
-# Vulkan, GLFW, GLM
-find_package(Vulkan REQUIRED)
-
 # -------------------------------
 # Create executable
 # -------------------------------
@@ -70,25 +68,41 @@ endif()
 # -------------------------------
 file(COPY ${CMAKE_SOURCE_DIR}/Shaders DESTINATION ${CMAKE_BINARY_DIR})
 file(COPY ${CMAKE_SOURCE_DIR}/Fonts DESTINATION ${CMAKE_BINARY_DIR})
+file(COPY ${CMAKE_SOURCE_DIR}/external/vulkan DESTINATION ${CMAKE_BINARY_DIR}/external)
+
 
 # -------------------------------
 # Link libraries
 # -------------------------------
 # ImGui library
+# GLFW library
+add_subdirectory(external/glfw)
+
 add_library(ImGui STATIC ${IMGUI_SOURCES})
 target_include_directories(ImGui PUBLIC
     ${IMGUI_PATH}
     ${IMGUI_PATH}/backends
+    ${CMAKE_SOURCE_DIR}/external
+    ${CMAKE_SOURCE_DIR}/external/volk
+    ${CMAKE_SOURCE_DIR}/external/glfw/include
 )
 
-# GLFW library
-add_subdirectory(external/glfw)
+
+if (WIN32)
+   set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
+endif()
+
+# volk library
+add_subdirectory(external/volk)
+target_include_directories(volk PUBLIC ${CMAKE_SOURCE_DIR}/external)
+
 # Link to executable
 target_link_libraries(${TARGET} PRIVATE
+    volk    
     glfw
-    Vulkan::Vulkan
     ImGui
 )
+
 
 # -------------------------------
 # Custom targets

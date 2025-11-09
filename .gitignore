@@ -40,7 +40,12 @@
 # debug information files
 *.dwo
 
+*.zip
+
 /build
 /.vscode
 /.cache
 /.idea
+/release-linux
+/build-linux
+/build-windows
