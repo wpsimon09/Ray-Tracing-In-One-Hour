@@ -50,50 +50,8 @@ float4 fragmentMain(VertexOutput fsIn) : SV_Target
     uint pixelIndex = pixelCoord.y * numPixels.x + pixelCoord.x;
     uint u = pixelIndex;
 
-       var camera = PinholeCamera(halfTanFov, aspect, GlobalData.view, GlobalData.inverseView);
-
-    
-    var scene = Scene(SceneData);
-    
-    
-    for(int rayPerpixel = 0; rayPerpixel < raysPerPixel; rayPerpixel++){
-
-        RayPayload payLoad = {};
-        var ray = camera.GenerateRayToWorld(fsIn.uv * 2.0f - 1.0f);
-        int numSamples = 1;
-
-        for(int bounce = 0; bounce < bounceCount; bounce++){
-            if(let hit = scene.GetClosestIntersection(ray)){
-                
-                // we have a hit 
-                payLoad.radiance += (hit.material.emmision * hit.material.emissionStrength) * payLoad.throughPut;
-    
-                var brdf = hit.material.GetBrdf(u);
-                var brdfSample = brdf.Sample(-ray.Direction, hit.normal, u);
-                
-                float cosTheta = max(0.0, dot(hit.normal, brdfSample.wi));
-
-                float3 f = brdf.f(-ray.Direction, hit.normal, brdfSample.wi) * cosTheta;
-    
-                payLoad.throughPut *= f / brdfSample.PDF;
-                
-                ray.Direction = brdfSample.wi;
-                ray.Origin = hit.hitPoint;
-                numSamples++;
-            }
-            // we dont have a hit so accumulate inderect light 
-            else{
-                float3 sky = SampleSkyColour(ray);
-                payLoad.radiance += sky * payLoad.throughPut;
-                break;
-            }  
-        }
-        camera.film += payLoad.radiance;
-    }
-    camera.film = (1.0/(float)raysPerPixel) * camera.film;
-
     //=================================
     // We start here 
-    return float4(camera.film, 1.0); // grayscale
+    return float4(fsIn.uv, 1.0); // grayscale
     
 }

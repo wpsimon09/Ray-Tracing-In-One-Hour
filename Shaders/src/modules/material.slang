@@ -19,19 +19,7 @@ public struct Material{
     public float emissionStrength = {0.0};
 
     public IBRDF GetBrdf(inout uint u){
-        float3 F0 = lerp(float3(0.4), albedo.xyz, metalnes);
-        float3 Ks = F0;
-        float3 Kd = 1.0 - Ks;
-
-        float p_specular  = max(max(Ks.x, Ks.y), Ks.z);
-
-        bool sampleSpecular = RandomValue(u) < p_specular;
-        
-        if(sampleSpecular){
-            return SpecularBrdf(albedo, roughnes, metalnes);
-        }else{
-            return DiffuseBrdf(albedo, metalnes);
-        }
+        return DiffuseBrdf(albedo, metalnes);
     }
 }
 
