@@ -19,7 +19,19 @@ public struct Material{
     public float emissionStrength = {0.0};
 
     public IBRDF GetBrdf(inout uint u){
-        return DiffuseBrdf(albedo, metalnes);
+        float3 F0 = lerp(float3(0.4), albedo.xyz, metalnes);
+        float3 Ks = F0;
+        float3 Kd = 1.0 - Ks;
+
+        float p_specular  = max(max(Ks.x, Ks.y), Ks.z);
+
+        bool sampleSpecular = RandomValue(u) < p_specular;
+        
+        if(sampleSpecular){
+            return SpecularBrdf(albedo, roughnes, metalnes);
+        }else{
+            return DiffuseBrdf(albedo, metalnes);
+        }
     }
 }
 
@@ -49,8 +61,8 @@ public struct DiffuseBrdf : IBRDF{
         if(dot(N, wo) <= 0.0f){
             return float3(0.0f);
         }
-        float cosTheta = max(dot(N, wo), 0.001);
-        return diffuseReflectance * (ONE_OVER_PI * cosTheta);
+        float cosTheta = max(dot(N, wi), 0.001);
+        return diffuseReflectance * (ONE_OVER_PI);
     }
 
     public BrdfSample Sample(float3 wo, float3 N, inout uint u){
@@ -99,7 +111,7 @@ public struct  SpecularBrdf : IBRDF{
 
     public float3 f(float3 wo, float3 N, float3 wi){
         float3 R = reflect(-wi, N);
-        return F0 * (phongNormalizationTerm(shnininess) * pow(max(0.0f, dot(R, wo)), shnininess) * dot(N, wi));
+        return F0 * (phongNormalizationTerm(shnininess) * pow(max(0.0f, dot(R, wo)), shnininess));
     }
 
     // Samples a Phong distribution lobe oriented along +Z axis
